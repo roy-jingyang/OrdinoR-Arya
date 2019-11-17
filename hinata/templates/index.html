@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title> Hinata </title>
+    <link rel="stylesheet" type="text/css" href="../static/css/hinata.css">
+</head>
+
+<body>
+    <h2> Project Hinata </h2>
+    <h4 style="font-style: italic"> "But they're here, my lord." </h4>
+
+
+    <div id="container">
+
+    <div id="canvas_org_m">
+        This is the canvas for plotting an organizational model.
+    </div>
+
+    <div id="canvas_proc_m">
+        This is the canvas for plotting a process model.
+    </div>
+
+    </div>
+</body>
+
+<script src="../static/javascript/d3.v4.min.js"></script>
+<script src="../static/javascript/viz.js"></script>
+<script src="../static/javascript/d3-graphviz.js"></script>
+
+<script src="../static/javascript/hinata.js"></script>
+
+<script>
+    var gviz_org_m = d3.select("#canvas_org_m").graphviz().fit(true);
+    var dot_data = {{ dotstr_org_model|tojson }};
+
+    df = new Factory(dot_data);
+
+</script>
+
+</html>
+

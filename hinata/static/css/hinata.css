@@ -1,0 +1,35 @@
+div#container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 1000px;
+  width: 100%;
+}
+
+div#canvas_org_m {
+  width: 80%;
+  height: 500px;
+  border: 5px solid blue;
+  padding: 50px;
+  margin: 10px;
+}
+
+div#canvas_org_m svg {
+  width: 100%;
+  height: auto;
+}
+
+div#canvas_proc_m {
+  width: 80%;
+  height: 250px;
+  border: 5px solid green;
+  padding: 50px;
+  margin: 10px;
+}
+
+div#canvas_proc_m svg {
+  width: 100%;
+  height: auto;
+}
+
