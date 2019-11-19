@@ -16,7 +16,8 @@ def main():
 
 def build_dot_strings_om():
     # TODO: hard-coded file for debugging
-    fn = './hinata/static/demo/wabo_fullCA-AHC-CF.om'
+    #fn = './hinata/static/demo/wabo_fullCA-AHC-CF.om'
+    fn = './hinata/static/demo/wabo_fullTC-MOC-CF.om'
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
@@ -39,7 +40,7 @@ def build_dot_strings_om():
         group_node_id = 'group' + id_delim + '{}'.format(og_id)
         graph.add_node(group_node_id, 
             label='Group {}'.format(og_id),
-            color='gray', shape='egg', 
+            color='gray', shape='house', 
             _class='group', _type='node')
 
         # member resources, and connecting edges to groups
@@ -47,7 +48,7 @@ def build_dot_strings_om():
             resource_node_id = 'resource' + id_delim + '{}'.format(resource)
             graph.add_node(resource_node_id,
                 label='{}'.format(resource),
-                color='gray', shape='circle',
+                color='gray', shape='ellipse',
                 _class='resource', _type='node')
             graph.add_edge(
                 group_node_id,
@@ -61,7 +62,7 @@ def build_dot_strings_om():
             mode_node_id = 'mode' + id_delim + '({},{},{})'.format(ct, at, tt)
             graph.add_node(mode_node_id,
                 label='{}, {}, {}'.format(em[0], em[1], em[2]),
-                color='gray', shape='rectangle',
+                color='gray', shape='octagon',
                 _class='mode', _type='node')
             graph.add_edge(
                 group_node_id,
@@ -70,6 +71,5 @@ def build_dot_strings_om():
 
         i += 1 # TODO
 
-    print(graph.string())
     return graph.string()
 

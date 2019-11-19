@@ -27,14 +27,37 @@
 <script src="../static/javascript/d3.v4.min.js"></script>
 <script src="../static/javascript/viz.js"></script>
 <script src="../static/javascript/d3-graphviz.js"></script>
+<script src="../static/javascript/jquery-3.4.1.min.js"></script>
 
 <script src="../static/javascript/hinata.js"></script>
 
 <script>
-    var gviz_org_m = d3.select("#canvas_org_m").graphviz().fit(true);
+    //var gviz_org_m = d3.select("#canvas_org_m").graphviz().fit(true);
+    //var cvs = d3.select("#canvas_org_m");
     var dot_data = {{ dotstr_org_model|tojson }};
 
     df = new Factory(dot_data);
+
+    function renderOrgM(currNodes) {
+        var dotSrcString = df.compileDotString(currNodes);
+        console.log(dotSrcString);
+
+        var transition_effect = d3.transition()
+            .duration(500).ease(d3.easeLinear);
+
+        d3.select("#canvas_org_m").graphviz().fit(true)
+            .transition(transition_effect)
+            .renderDot(dotSrcString, function() {
+                attachListeners(
+                    currNodes,
+                    d3.select("#canvas_org_m").select(".graph"));
+        });
+    }
+
+    <!-- Display all group nodes when page loaded. -->
+    var allGroupNodes = df.getGroupNodes(df.getAllGroupNodeIds());
+
+    renderOrgM(allGroupNodes);
 
 </script>
 
