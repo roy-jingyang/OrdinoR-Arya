@@ -3,17 +3,23 @@ var delim = '/::/';
 
 class ModeTree {
 
+    // NOTE: this is not a common tree --- each node records its children.
     constructor(modeNodeIdList, preference) {
-        this.firstLevelNodes = new Map();
-        this.secondLevelNodes = new Map();
-        this.thirdLevelNodes = new Map();
+        this.nodes = [];
+        this.nodes.push(null);
+        for (var i = 1; i <= 3; i++) {
+            this.nodes.push(new Map());
+        }
 
-        switch(preference) {
+        this.viewType = preference;
+
+        switch(this.viewType) {
             case "case_first":
                 this.buildTreeCaseFirst(modeNodeIdList);
                 break;
             case "time_first":
-                this.buildTreeTimeFirst(modeNodeIdList);
+                //this.buildTreeTimeFirst(modeNodeIdList);
+                break;
             default:
                 // do nothing
         }
@@ -27,7 +33,7 @@ class ModeTree {
         return [ct, at, tt];
     }
 
-    identifyModeTriple(modeTriple, height) {
+    stringifyModeTriple(modeTriple) {
         return "mode" + delim + '(' + modeTriple.join(',') + ')';
     }
 
@@ -37,50 +43,87 @@ class ModeTree {
         for (var modeNodeId of modeNodeIdList) {
             const [ct, at, tt] = this.parseModeTriple(modeNodeId);
 
-            var ctXX = this.identifyModeTriple([ct, '*', '*'], 1);
-            var ctXtt = this.identifyModeTriple([ct, '*', tt], 2);
-            var ctattt = this.identifyModeTriple([ct, at, tt], 3);
+            var ctXX = this.stringifyModeTriple([ct, '*', '*']);
+            var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
+            var ctattt = this.stringifyModeTriple([ct, at, tt]);
 
-            if (!this.firstLevelNodes.has(ctXX)) {
-                this.firstLevelNodes.set(ctXX, []);
+            if (!this.nodes[1].has(ctXX)) {
+                this.nodes[1].set(ctXX, new Set());
             }
-            this.firstLevelNodes.get(ctXX).push(ctXtt);
+            this.nodes[1].get(ctXX).add(ctXtt);
+                
 
-            if (!this.secondLevelNodes.has(ctXtt)) {
-                this.secondLevelNodes.set(ctXtt, []);
+            if (!this.nodes[2].has(ctXtt)) {
+                this.nodes[2].set(ctXtt, new Set());
             }
-            this.secondLevelNodes.get(ctXtt).push(ctattt);
+            this.nodes[2].get(ctXtt).add(ctattt);
 
-            if (!this.thirdLevelNodes.has(ctattt)) {
-                this.thirdLevelNodes.set(ctattt, null);
+            if (!this.nodes[3].has(ctattt)) {
+                this.nodes[3].set(ctattt, new Set());
             }
         }
     }
 
+    // TODO
     buildTreeTimeFirst(modeNodeIdList) {
         //console.log("time first building");
 
         for (var modeNodeId of modeNodeIdList) {
             const [ct, at, tt] = this.parseModeTriple(modeNodeId);
 
-            var XXtt = this.identifyModeTriple(['*', '*', tt], 1);
-            var ctXtt = this.identifyModeTriple([ct, '*', tt], 2);
-            var ctattt = this.identifyModeTriple([ct, at, tt], 3);
+            var XXtt = this.stringifyModeTriple(['*', '*', tt]);
+            var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
+            var ctattt = this.stringifyModeTriple([ct, at, tt]);
 
-            if (!this.firstLevelNodes.has(XXtt)) {
-                this.firstLevelNodes.set(XXtt, []);
+            if (!this.nodes[1].has(XXtt)) {
+                this.nodes[1].set(XXtt, new Set());
             }
-            this.firstLevelNodes.get(XXtt).push(ctXtt);
+            this.nodes[1].get(XXtt).add(ctXtt);
 
-            if (!this.secondLevelNodes.has(ctXtt)) {
-                this.secondLevelNodes.set(ctXtt, []);
+            if (!this.nodes[2].has(ctXtt)) {
+                this.nodes[2].set(ctXtt, new Set());
             }
-            this.secondLevelNodes.get(ctXtt).push(ctattt);
+            this.nodes[2].get(ctXtt).add(ctattt);
 
-            if (!this.thirdLevelNodes.has(ctattt)) {
-                this.thirdLevelNodes.set(ctatttt, null);
+            if (!this.nodes[3].has(ctattt)) {
+                this.nodes[3].set(ctattt, new Set());
             }
         }
+    }
+
+    // corresponding to first, second, and third -level nodes
+    getNodeLevel(modeNodeId) {
+        const modeTriple = this.parseModeTriple(modeNodeId);
+        var count = 0;
+        for (var type of modeTriple) {
+            if (type == '*')
+                count += 1;
+        }
+        return (3 - count);
+    }
+
+    getChildNodes(modeNodeId) {
+        var nodeLevel = this.getNodeLevel(modeNodeId);
+        return this.nodes[nodeLevel].get(modeNodeId);
+    }
+
+    getGrandParentNodeFromLeaf(modeNodeId) {
+        const [ct, at, tt] = this.parseModeTriple(modeNodeId);
+        switch (this.viewType) {
+            case "case_first":
+                return this.stringifyModeTriple([ct, '*', '*']);
+                break;
+            case "time_first":
+                return this.stringifyModeTriple(['*', '*', tt]);
+                break;
+            default:
+                // do nothing
+        }
+    }
+
+    getParentNodeFromLeaf(modeNodeId) {
+        const [ct, at, tt] = this.parseModeTriple(modeNodeId);
+        return this.stringifyModeTriple([ct, '*', tt]);
     }
 
 }
@@ -292,6 +335,39 @@ class Factory {
         return allEdges;
     }
 
+    removeNodes(nodeList, nodeId) {
+        if (Array.isArray(nodeId)) {
+            return nodeList.filter(function(value, index, array) {
+                return !(nodeId.includes(value[0]));
+            });
+        } else {
+            return nodeList.filter(function(value, index, array) {
+                return value[0] != nodeId;
+            });
+        }
+    }
+
+    removeEdges(edgeList, nodeUId, nodeVId) {
+        if (nodeVId === undefined) {
+            if (Array.isArray(nodeUId)) {
+                return edgeList.filter(function(value, index, array) {
+                    return (
+                        !nodeUId.includes(value[0]) && 
+                        !nodeUId.includes(value[1]));
+                });
+            } else {
+                return edgeList.filter(function(value, index, array) {
+                    return (value[0] != nodeUId && value[1] != nodeUId);
+                });
+            }
+
+        } else {
+            return edgeList.filter(function(value, index, array) {
+                return !(value.sort() == [nodeUId, nodeVId].sort());
+            })
+        }
+    }
+
     // Helper: sort nodeList by an order of "resources > groups > modes"
     compareNodeList(a, b) {
         var order = ["mode", "group", "resource"];
@@ -336,12 +412,8 @@ class Factory {
 
         // edge parts
         var edgeDotSrcString = "";
-        if (edgeList === null) {
-            var edgeList = this.findEdges(nodeIdList);
-        }
-
         // create edges based on all existing nodes
-        for (const [u, v] of this.findEdges(nodeIdList)) {
+        for (const [u, v] of edgeList) {
             edgeDotSrcString = edgeDotSrcString.concat(
                 '"' + new String(u) + '"' + 
                 " -- " +
@@ -352,7 +424,7 @@ class Factory {
             + edgeDotSrcString + "\n}");
     }
 
-    createAugmentedModeNode(modeTreeElem) {
+    createAugmentedModeNode(modeNodeId) {
         var modeNodeElem = new Object();
         for (const [id, elem] of this.nodeListModes.entries()) {
             for (var attr in elem) {
@@ -361,10 +433,11 @@ class Factory {
             }
             break;
         }
-        modeNodeElem["label"] = modeTreeElem.split(delim)[1]
+        modeNodeElem["label"] = modeNodeId.split(delim)[1]
             .slice(1, -1);
-        return [modeTreeElem, modeNodeElem];
+        return [modeNodeId, modeNodeElem];
     }
+
 
 }
 
@@ -392,57 +465,76 @@ function attachListeners(elemList, graph) {
     });
 }
 
-function attachGroupNodeListeners(elemList, node) {
-    const [nodeList, edgeList] = elemList;
+function attachGroupNodeListeners(elemList, groupNode) {
+    var [nodeList, edgeList] = elemList;
 
+    var nodeIdList = [];
+    for (node of nodeList)
+        nodeIdList.push(node[0]);
+    
     // groups and member resources
-    node.on("contextmenu", function() {
+    groupNode.on("contextmenu", function() {
         var groupId = d3.select(this).select("title").text();
+        var memberIds = df.getMemberNodeIdsByGroup(groupId);
+
         if (df.nodeStatus.get(groupId) == "contextmenu") {
             //console.log("already clicked. Reverting");
             df.nodeStatus.set(groupId, '');
-            var memberIds = df.getMemberNodeIdsByGroup(groupId);
             renderOrgM(
-                nodeList.filter(function(value, index, array) {
-                    return !(memberIds.includes(value[0]));
-                }), 
-                null
+                df.removeNodes(nodeList, memberIds),
+                // TODO: how to deal with overlapped groups?
+                df.removeEdges(edgeList, memberIds)
             );
         } else {
             //console.log("not clicked. Setting");
             df.nodeStatus.set(groupId, "contextmenu");
-            var members = df.getResourceNodes(
-                df.getMemberNodeIdsByGroup(groupId));
-            renderOrgM(nodeList.concat(members), null);
+            renderOrgM(
+                nodeList.concat(df.getResourceNodes(memberIds)),
+                df.findEdges(nodeIdList.concat(memberIds))
+            );
         }
     });
 
     // groups and capabilities
-    // TODO
-    node.on("dblclick", function() {
+    groupNode.on("dblclick", function() {
         var groupId = d3.select(this).select("title").text();
+
+        var capIds = df.getCapabilityNodeIdsByGroup(groupId);
+        var firstLevelCapIds = [];
+        for (var modeNodeId of capIds) {
+            var grandParentNodeId = 
+                df.modeTree.getGrandParentNodeFromLeaf(modeNodeId);
+            firstLevelCapIds.push(grandParentNodeId);
+        }
+
         if (df.nodeStatus.get(groupId) == "click") {
             //console.log("already clicked. Reverting");
             df.nodeStatus.set(groupId, '');
-            var capIds = df.getCapabilityNodeIdsByGroup(groupId);
             renderOrgM(
-                nodeList.filter(function(value, index, array) {
-                    return !(capIds.includes(value[0]));
-                }), 
-                null
+                df.removeNodes(nodeList, firstLevelCapIds),
+                df.removeEdges(edgeList, firstLevelCapIds)
             );
         } else {
             //console.log("not clicked. Setting");
             df.nodeStatus.set(groupId, "click");
-            var caps = df.getModeNodes(
-                df.getCapabilityNodeIdsByGroup(groupId));
-            renderOrgM(nodeList.concat(caps), null);
+            var firstLevelCaps = [];
+            var newEdges = [];
+            for (var nodeId of firstLevelCapIds) {
+                firstLevelCaps.push(
+                    df.createAugmentedModeNode(nodeId));
+                newEdges.push([groupId, nodeId]);
+            }
+
+            renderOrgM(
+                nodeList.concat(firstLevelCaps), 
+                edgeList.concat(newEdges)
+            );
         }
     });
 }
 
-function attachResourceNodeListeners(node) {
-    /*
+function attachResourceNodeListeners(elemList, node) {
+    /* do nothing
     node.on("click", function() {
         console.log("Click on a 'resource': " 
             + d3.select(this).select("title").text());
@@ -450,13 +542,53 @@ function attachResourceNodeListeners(node) {
     */
 }
 
-// TODO
-function attachModeNodeListeners(node) {
+// TODO: how to scope to particular resource group?
+function attachModeNodeListeners(elemList, modeNode) {
     /*
     node.on("click", function() {
         console.log("Click on a 'mode': " 
             + d3.select(this).select("title").text());
     });
     */
+    var [nodeList, edgeList] = elemList;
+
+    var nodeIdList = [];
+    for (node of nodeList)
+        nodeIdList.push(node[0]);
+
+    modeNode.on("dblclick", function() {
+        var modeId = d3.select(this).select("title").text();
+        
+        var childNodeIds = Array.from(df.modeTree.getChildNodes(modeId));
+        //console.log(childNodeIds);
+        //
+        if (childNodeIds.length > 0) {
+            if (df.nodeStatus.get(modeId) == "click") {
+                //console.log("already clicked. Reverting");
+                df.nodeStatus.set(modeId, '');
+                renderOrgM(
+                    df.removeNodes(nodeList, childNodeIds),
+                    df.removeEdges(edgeList, childNodeIds)
+                );
+            } else {
+                //console.log("not clicked. Setting");
+                df.nodeStatus.set(modeId, "click");
+                var descendants = [];
+                var newEdges = [];
+                for (var nodeId of childNodeIds) {
+                    descendants.push(
+                        df.createAugmentedModeNode(nodeId));
+                    newEdges.push([modeId, nodeId]);
+                }
+                renderOrgM(
+                    nodeList.concat(descendants),
+                    edgeList.concat(newEdges)
+                );
+            }
+
+        }
+        
+    });
+    
 }
 

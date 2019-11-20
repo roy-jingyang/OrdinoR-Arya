@@ -16,8 +16,8 @@ def main():
 
 def build_dot_strings_om():
     # TODO: hard-coded file for debugging
-    #fn = './hinata/static/demo/wabo_fullCA-AHC-CF.om'
-    fn = './hinata/static/demo/wabo_fullTC-MOC-CF.om'
+    fn = './hinata/static/demo/wabo_fullCA-AHC-CF.om'
+    #fn = './hinata/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
@@ -26,12 +26,14 @@ def build_dot_strings_om():
     # construct organizational model DOT string
     graph = pgv.AGraph(strict=True, directed=True)
 
-    length = 2
+    # TODO: debug use
+    N_groups = 3
+    N_modes = 6
     i = 0
 
     id_delim = '/::/'
     for og_id, og in om.find_all_groups():
-        if i < length:
+        if i < N_groups:
             pass
         else:
             break
@@ -58,7 +60,7 @@ def build_dot_strings_om():
                 _class='group-resource', _type='edge')
 
         # capable execution modes, and connecting edges to groups
-        exec_modes = om.find_group_execution_modes(og_id)[:3] # TODO
+        exec_modes = om.find_group_execution_modes(og_id)[:N_modes] # TODO
         for em in exec_modes:
             ct, at, tt = em[0], em[1], em[2]
             mode_node_id = 'mode' + id_delim + '({},{},{})'.format(ct, at, tt)
