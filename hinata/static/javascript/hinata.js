@@ -22,19 +22,21 @@ class Factory {
 
         // parse the dot source string
         var attrList_patt = /\[*\]/i;
-        var trimQuote = function(str) {
-            return str.replace(/"/g, '');
+        var cleanChar = function(str) {
+            var newStr = str.replace(/"/g, '');
+            newStr = newStr.replace(/\n/g, '');
+            return newStr;
         }
 
         var lines = dotSrcString.split(";\n\t");
         //var strHead = lines[0];
         for (var i = 1; i < lines.length; i++) {
             const [idStr, attrsStr] = lines[i].split('\t ');
-            var id = trimQuote(idStr);
+            var id = cleanChar(idStr);
             var elem = Object();
 
             //console.log(idStr);
-            //elem["id"] = trimQuote(idStr);
+            //elem["id"] = cleanChar(idStr);
             
             var match = /\[*\]/g.exec(attrsStr);
             if (match) {
@@ -46,7 +48,7 @@ class Factory {
             for (var key_val of attrList.split(',\n\t\t')) {
                 //console.log(key_val.split('='));
                 const [key, val] = key_val.split('=');
-                elem[key] = trimQuote(val);
+                elem[key] = cleanChar(val);
             }
             //console.log(elem);
 
@@ -164,11 +166,12 @@ class Factory {
                 return false;
             }
             else if (nodeVId.indexOf("resource") == 0) {
-                return this.getMemberNodeIdsByGroup(nodeUId).
-                    includes(nodeVId);
+                return this.getMemberNodeIdsByGroup(nodeUId)
+                    .includes(nodeVId);
             }
             else if (nodeVId.indexOf("mode") == 0) {
-                return (nodeVId in this.getCapabilityNodeIdsByGroup(nodeUId));
+                return this.getCapabilityNodeIdsByGroup(nodeUId)
+                    .includes(nodeVId);
             }
             else {
                 return false;
@@ -198,11 +201,32 @@ class Factory {
         return allEdges;
     }
 
-    // TODO: to be debugged.
-    compileDotString(nodeList) {
+    // Helper: sort nodeList by an order of "resources > groups > modes"
+    compareNodeList(a, b) {
+        var order = ["mode", "group", "resource"];
+        var order_a = order.indexOf(a[0].split(delim)[0]);
+        var order_b = order.indexOf(b[0].split(delim)[0]);
+
+        if (order_a == -1 || order_b == -1)
+            return;
+
+        if (order_a < order_b)
+            return 1;
+        else if (order_a == order_b)
+            return 0;
+        else
+            return -1;
+
+    }
+
+    compileDotString(nodeList, edgeList) {
         // node parts
         var nodeIdList = [];
         var nodeDotSrcString = 'node [style="filled"]\n';
+
+        // sort nodeList by the customized order
+        nodeList.sort(this.compareNodeList);
+
         for (var node of nodeList) {
             nodeIdList.push(node[0]);
 
@@ -221,6 +245,11 @@ class Factory {
 
         // edge parts
         var edgeDotSrcString = "";
+        if (edgeList === null) {
+            var edgeList = this.findEdges(nodeIdList);
+        }
+
+        // create edges based on all existing nodes
         for (const [u, v] of this.findEdges(nodeIdList)) {
             edgeDotSrcString = edgeDotSrcString.concat(
                 '"' + new String(u) + '"' + 
@@ -230,12 +259,11 @@ class Factory {
 
         return ("strict graph {\n" + nodeDotSrcString 
             + edgeDotSrcString + "\n}");
-
     }
 
 }
 
-function attachListeners(curr, graph) {
+function attachListeners(elemList, graph) {
     // console.log(graph);
     // search for all node elements in an svg graph and attach listeners 
     graph.selectAll(".node").selectAll(function() {
@@ -244,13 +272,13 @@ function attachListeners(curr, graph) {
 
         switch(nodeType) {
             case "group":
-                attachGroupNodeListeners(curr, d3.select(this));
+                attachGroupNodeListeners(elemList, d3.select(this));
                 break;
             case "resource":
-                attachResourceNodeListeners(curr, d3.select(this));
+                attachResourceNodeListeners(elemList, d3.select(this));
                 break;
             case "mode":
-                attachModeNodeListeners(curr, d3.select(this));
+                attachModeNodeListeners(elemList, d3.select(this));
                 break;
             default:
                 // do nothing
@@ -259,24 +287,48 @@ function attachListeners(curr, graph) {
     });
 }
 
-function attachGroupNodeListeners(curr, node) {
-    node.on("click", function() {
-        var groupId = d3.select(this).select("title").text();
+function attachGroupNodeListeners(elemList, node) {
+    const [nodeList, edgeList] = elemList;
 
-        if (df.nodeStatus.get(groupId) == "clicked") {
-            console.log("already clicked. Reverting");
-            console.log(groupId);
+    node.on("contextmenu", function() {
+        var groupId = d3.select(this).select("title").text();
+        if (df.nodeStatus.get(groupId) == "contextmenu") {
+            //console.log("already clicked. Reverting");
             df.nodeStatus.set(groupId, '');
             var memberIds = df.getMemberNodeIdsByGroup(groupId);
-            renderOrgM(curr.filter(function(value, index, array) {
-                return !(memberIds.includes(value[0]));
-            }));
+            renderOrgM(
+                nodeList.filter(function(value, index, array) {
+                    return !(memberIds.includes(value[0]));
+                }), 
+                null
+            );
         } else {
-            console.log("not clicked. Setting");
-            df.nodeStatus.set(groupId, "clicked");
+            //console.log("not clicked. Setting");
+            df.nodeStatus.set(groupId, "contextmenu");
             var members = df.getResourceNodes(
                 df.getMemberNodeIdsByGroup(groupId));
-            renderOrgM(curr.concat(members));
+            renderOrgM(nodeList.concat(members), null);
+        }
+    });
+
+    node.on("dblclick", function() {
+        var groupId = d3.select(this).select("title").text();
+        if (df.nodeStatus.get(groupId) == "click") {
+            //console.log("already clicked. Reverting");
+            df.nodeStatus.set(groupId, '');
+            var capIds = df.getCapabilityNodeIdsByGroup(groupId);
+            renderOrgM(
+                nodeList.filter(function(value, index, array) {
+                    return !(capIds.includes(value[0]));
+                }), 
+                null
+            );
+        } else {
+            //console.log("not clicked. Setting");
+            df.nodeStatus.set(groupId, "click");
+            var caps = df.getModeNodes(
+                df.getCapabilityNodeIdsByGroup(groupId));
+            renderOrgM(nodeList.concat(caps), null);
         }
     });
 }

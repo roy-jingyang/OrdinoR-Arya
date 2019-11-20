@@ -40,7 +40,8 @@ def build_dot_strings_om():
         group_node_id = 'group' + id_delim + '{}'.format(og_id)
         graph.add_node(group_node_id, 
             label='Group {}'.format(og_id),
-            color='gray', shape='house', 
+            color='cadetblue1', shape='house', 
+            fontname='Helvetica',
             _class='group', _type='node')
 
         # member resources, and connecting edges to groups
@@ -48,7 +49,8 @@ def build_dot_strings_om():
             resource_node_id = 'resource' + id_delim + '{}'.format(resource)
             graph.add_node(resource_node_id,
                 label='{}'.format(resource),
-                color='gray', shape='ellipse',
+                color='gold', shape='ellipse',
+                fontname="Helvetica",
                 _class='resource', _type='node')
             graph.add_edge(
                 group_node_id,
@@ -62,7 +64,8 @@ def build_dot_strings_om():
             mode_node_id = 'mode' + id_delim + '({},{},{})'.format(ct, at, tt)
             graph.add_node(mode_node_id,
                 label='{}, {}, {}'.format(em[0], em[1], em[2]),
-                color='gray', shape='octagon',
+                color='gainsboro', shape='octagon',
+                fontname="Helvetica", fontsize="10",
                 _class='mode', _type='node')
             graph.add_edge(
                 group_node_id,

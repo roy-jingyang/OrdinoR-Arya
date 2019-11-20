@@ -38,9 +38,9 @@
 
     df = new Factory(dot_data);
 
-    function renderOrgM(currNodes) {
-        var dotSrcString = df.compileDotString(currNodes);
-        console.log(dotSrcString);
+    function renderOrgM(nodeList, edgeList) {
+        var dotSrcString = df.compileDotString(nodeList, edgeList);
+        console.log("Renderer invoked for source:\n\n" + dotSrcString);
 
         var transition_effect = d3.transition()
             .duration(500).ease(d3.easeLinear);
@@ -49,15 +49,15 @@
             .transition(transition_effect)
             .renderDot(dotSrcString, function() {
                 attachListeners(
-                    currNodes,
+                    [nodeList, edgeList],
                     d3.select("#canvas_org_m").select(".graph"));
+
+                d3.select("svg").on("dblclick.zoom", null);
         });
     }
 
     <!-- Display all group nodes when page loaded. -->
-    var allGroupNodes = df.getGroupNodes(df.getAllGroupNodeIds());
-
-    renderOrgM(allGroupNodes);
+    renderOrgM(df.getGroupNodes(df.getAllGroupNodeIds()), null); 
 
 </script>
 
