@@ -1,4 +1,90 @@
+
 var delim = '/::/';
+
+class ModeTree {
+
+    constructor(modeNodeIdList, preference) {
+        this.firstLevelNodes = new Map();
+        this.secondLevelNodes = new Map();
+        this.thirdLevelNodes = new Map();
+
+        switch(preference) {
+            case "case_first":
+                this.buildTreeCaseFirst(modeNodeIdList);
+                break;
+            case "time_first":
+                this.buildTreeTimeFirst(modeNodeIdList);
+            default:
+                // do nothing
+        }
+
+        return this;
+    }
+
+    parseModeTriple(modeNodeId) {
+        var modeStr = modeNodeId.split(delim)[1];
+        const [ct, at, tt] = modeStr.slice(1, -1).split(',');
+        return [ct, at, tt];
+    }
+
+    identifyModeTriple(modeTriple, height) {
+        return "mode" + delim + '(' + modeTriple.join(',') + ')';
+    }
+
+    buildTreeCaseFirst(modeNodeIdList) {
+        //console.log("case first building");
+
+        for (var modeNodeId of modeNodeIdList) {
+            const [ct, at, tt] = this.parseModeTriple(modeNodeId);
+
+            var ctXX = this.identifyModeTriple([ct, '*', '*'], 1);
+            var ctXtt = this.identifyModeTriple([ct, '*', tt], 2);
+            var ctattt = this.identifyModeTriple([ct, at, tt], 3);
+
+            if (!this.firstLevelNodes.has(ctXX)) {
+                this.firstLevelNodes.set(ctXX, []);
+            }
+            this.firstLevelNodes.get(ctXX).push(ctXtt);
+
+            if (!this.secondLevelNodes.has(ctXtt)) {
+                this.secondLevelNodes.set(ctXtt, []);
+            }
+            this.secondLevelNodes.get(ctXtt).push(ctattt);
+
+            if (!this.thirdLevelNodes.has(ctattt)) {
+                this.thirdLevelNodes.set(ctattt, null);
+            }
+        }
+    }
+
+    buildTreeTimeFirst(modeNodeIdList) {
+        //console.log("time first building");
+
+        for (var modeNodeId of modeNodeIdList) {
+            const [ct, at, tt] = this.parseModeTriple(modeNodeId);
+
+            var XXtt = this.identifyModeTriple(['*', '*', tt], 1);
+            var ctXtt = this.identifyModeTriple([ct, '*', tt], 2);
+            var ctattt = this.identifyModeTriple([ct, at, tt], 3);
+
+            if (!this.firstLevelNodes.has(XXtt)) {
+                this.firstLevelNodes.set(XXtt, []);
+            }
+            this.firstLevelNodes.get(XXtt).push(ctXtt);
+
+            if (!this.secondLevelNodes.has(ctXtt)) {
+                this.secondLevelNodes.set(ctXtt, []);
+            }
+            this.secondLevelNodes.get(ctXtt).push(ctattt);
+
+            if (!this.thirdLevelNodes.has(ctattt)) {
+                this.thirdLevelNodes.set(ctatttt, null);
+            }
+        }
+    }
+
+}
+
 
 // class for handling data elements
 class Factory {
@@ -29,6 +115,7 @@ class Factory {
         }
 
         var lines = dotSrcString.split(";\n\t");
+        var modeNodeIdList = [];
         //var strHead = lines[0];
         for (var i = 1; i < lines.length; i++) {
             const [idStr, attrsStr] = lines[i].split('\t ');
@@ -63,6 +150,7 @@ class Factory {
             else if (elem["_type"] == "node" && elem["_class"] == "mode") {
                 this.nodeListModes.set(id, elem);
                 this.nodeStatus.set(id, '');
+                modeNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
                 const [groupNodeId, resourceNodeId] = id.split(' -> ');
@@ -93,6 +181,9 @@ class Factory {
             }
 
         }
+
+        // build the execution mode tree
+        this.modeTree = new ModeTree(modeNodeIdList, "case_first");
 
         return this;
     }
@@ -238,7 +329,7 @@ class Factory {
                     string += '"' + new String(node[1][attr]) + '",';
                 }
             }
-            string = string.slice(0, string.length - 1);
+            string = string.slice(0, -1);
             string += "];\n"
             nodeDotSrcString = nodeDotSrcString.concat(string);
         }
@@ -259,6 +350,20 @@ class Factory {
 
         return ("strict graph {\n" + nodeDotSrcString 
             + edgeDotSrcString + "\n}");
+    }
+
+    createAugmentedModeNode(modeTreeElem) {
+        var modeNodeElem = new Object();
+        for (const [id, elem] of this.nodeListModes.entries()) {
+            for (var attr in elem) {
+                if (attr != "label")
+                    modeNodeElem[attr] = elem[attr];
+            }
+            break;
+        }
+        modeNodeElem["label"] = modeTreeElem.split(delim)[1]
+            .slice(1, -1);
+        return [modeTreeElem, modeNodeElem];
     }
 
 }
@@ -290,6 +395,7 @@ function attachListeners(elemList, graph) {
 function attachGroupNodeListeners(elemList, node) {
     const [nodeList, edgeList] = elemList;
 
+    // groups and member resources
     node.on("contextmenu", function() {
         var groupId = d3.select(this).select("title").text();
         if (df.nodeStatus.get(groupId) == "contextmenu") {
@@ -311,6 +417,8 @@ function attachGroupNodeListeners(elemList, node) {
         }
     });
 
+    // groups and capabilities
+    // TODO
     node.on("dblclick", function() {
         var groupId = d3.select(this).select("title").text();
         if (df.nodeStatus.get(groupId) == "click") {
@@ -342,6 +450,7 @@ function attachResourceNodeListeners(node) {
     */
 }
 
+// TODO
 function attachModeNodeListeners(node) {
     /*
     node.on("click", function() {
@@ -350,13 +459,4 @@ function attachModeNodeListeners(node) {
     });
     */
 }
-// Display all member resources when double-click on a group. -->
-
-// (Revert) Hide all member resources. -->
-
-// Display all related execution modes when click on a group. -->
-
-// (Revert) Hide all related execution modes. -->
-
-// Display all participating groups when click on a resource. -->
 
