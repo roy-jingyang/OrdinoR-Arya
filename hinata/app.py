@@ -52,7 +52,7 @@ def build_dot_strings_om():
             graph.add_node(resource_node_id,
                 label='{}'.format(resource),
                 color='gold', shape='ellipse',
-                fontname="Helvetica",
+                fontname="Helvetica", fontsize="10",
                 _class='resource', _type='node')
             graph.add_edge(
                 group_node_id,

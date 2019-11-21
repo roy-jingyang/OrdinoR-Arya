@@ -18,7 +18,7 @@ class ModeTree {
                 this.buildTreeCaseFirst(modeNodeIdList);
                 break;
             case "time_first":
-                //this.buildTreeTimeFirst(modeNodeIdList);
+                this.buildTreeTimeFirst(modeNodeIdList);
                 break;
             default:
                 // do nothing
@@ -64,7 +64,6 @@ class ModeTree {
         }
     }
 
-    // TODO
     buildTreeTimeFirst(modeNodeIdList) {
         //console.log("time first building");
 
@@ -102,9 +101,22 @@ class ModeTree {
         return (3 - count);
     }
 
-    getChildNodes(modeNodeId) {
+    getChildNodes(modeNodeId, isTraverse) {
         var nodeLevel = this.getNodeLevel(modeNodeId);
-        return this.nodes[nodeLevel].get(modeNodeId);
+        if (isTraverse == true && nodeLevel == 1) {
+            // only effective for grandparent nodes
+            var allSprings = [];
+            var children = Array.from(this.nodes[nodeLevel].get(modeNodeId))
+                .sort();
+            allSprings = allSprings.concat(children);
+            for (var child of children) {
+                allSprings = allSprings.concat(
+                    this.getChildNodes(child, false));
+            }
+            return allSprings;
+        } else {
+            return Array.from(this.nodes[nodeLevel].get(modeNodeId)).sort();
+        }
     }
 
     getGrandParentNodeFromLeaf(modeNodeId) {
@@ -143,7 +155,7 @@ class Factory {
         this.nodeListGroups = new Map();
         this.nodeListModes = new Map();
 
-        this.nodeStatus = new Map();
+        this.nodeStatusTracker = new Map();
 
         this.edgeListGroupsResources = new Map();
         this.edgeListGroupsModes = new Map();
@@ -184,15 +196,15 @@ class Factory {
 
             if (elem["_type"] == "node" && elem["_class"] == "group") {
                 this.nodeListGroups.set(id, elem);
-                this.nodeStatus.set(id, '');
+                this.nodeStatusTracker.set(id, []);
             }
             else if (elem["_type"] == "node" && elem["_class"] == "resource") {
                 this.nodeListResources.set(id, elem);
-                this.nodeStatus.set(id, '');
+                this.nodeStatusTracker.set(id, []);
             }
             else if (elem["_type"] == "node" && elem["_class"] == "mode") {
                 this.nodeListModes.set(id, elem);
-                this.nodeStatus.set(id, '');
+                this.nodeStatusTracker.set(id, []);
                 modeNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
@@ -232,7 +244,7 @@ class Factory {
     }
 
     getAllGroupNodeIds() {
-        return Array.from(this.nodeListGroups.keys());
+        return Array.from(this.nodeListGroups.keys()).sort();
     }
 
     getGroupNodes(nbunch) {
@@ -246,7 +258,7 @@ class Factory {
     }
 
     getAllResourceNodeIds() {
-        return Array.from(this.nodeListResources.keys());
+        return Array.from(this.nodeListResources.keys()).sort();
     }
 
     getResourceNodes(nbunch) {
@@ -260,7 +272,7 @@ class Factory {
     }
 
     getAllModeNodeIds() {
-        return Array.from(this.nodeListModes.keys());
+        return Array.from(this.nodeListModes.keys()).sort();
     }
 
     getModeNodes(nbunch) {
@@ -275,22 +287,22 @@ class Factory {
 
     getMemberNodeIdsByGroup(groupNodeId) {
         const members = this.edgeListGroupsResources.get(groupNodeId);
-        return members;
+        return members.sort();
     }
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
         const caps = this.edgeListGroupsModes.get(groupNodeId);
-        return caps;
+        return caps.sort();
     }
 
     getGroupNodeIdsByResource(resourceNodeId) {
         const groups = this.edgeListGroupsResources.get(resourceNodeId);
-        return groups;
+        return groups.sort();
     }
 
     getGroupNodeIdsByMode(modeNodeId) {
         const groups = this.edgeListGroupsModes.get(modeNodeId);
-        return groups;
+        return groups.sort();
     }
 
     hasEdge(nodeUId, nodeVId) {
@@ -394,21 +406,40 @@ class Factory {
         // sort nodeList by the customized order
         nodeList.sort(this.compareNodeList);
 
-        for (var node of nodeList) {
-            nodeIdList.push(node[0]);
+        // make subgraphs
+        var nodeClusters = new Map();
+        /*
+        nodeClusters.set("resource", []);
+        nodeClusters.set("group", []);
+        nodeClusters.set("mode", []);
+        */
 
-            var string = '"' + new String(node[0]) + '"';
-            string += ' ' + '[';
-            for (const attr in node[1]) {
-                if (attr[0] != '_') {
-                    string += new String(attr) + '=';
-                    string += '"' + new String(node[1][attr]) + '",';
-                }
-            }
-            string = string.slice(0, -1);
-            string += "];\n"
-            nodeDotSrcString = nodeDotSrcString.concat(string);
+        for (var node of nodeList) {
+            var nodeType = node[0].split(delim)[0];
+            if (!nodeClusters.has(nodeType))
+                nodeClusters.set(nodeType, []);
+            nodeClusters.get(nodeType).push(node);
         }
+
+        nodeClusters.forEach(function(nodeList, nodeType, map) {
+            var string = ("subgraph " + nodeType + " {\n" +
+                (nodeType == "mode" ? '' : 'rank="same";\n'));
+            
+            for (var node of nodeList) {
+                string += '\t"' + new String(node[0]) + '"';
+                string += ' [';
+                for (const attr in node[1]) {
+                    if (attr[0] != '_') {
+                        string += new String(attr) + '=';
+                        string += '"' + new String(node[1][attr]) + '",';
+                    }
+                }
+                string = string.slice(0, -1);
+                string += "];\n";
+            }
+            string += "}\n";
+            nodeDotSrcString = nodeDotSrcString.concat(string);
+        });
 
         // edge parts
         var edgeDotSrcString = "";
@@ -420,7 +451,7 @@ class Factory {
                 '"' + new String(v) + '";\n');
         }
 
-        return ("strict graph {\n" + nodeDotSrcString 
+        return ("strict graph {" + nodeDotSrcString 
             + edgeDotSrcString + "\n}");
     }
 
@@ -469,17 +500,20 @@ function attachGroupNodeListeners(elemList, groupNode) {
     var [nodeList, edgeList] = elemList;
 
     var nodeIdList = [];
-    for (node of nodeList)
+    for (var node of nodeList)
         nodeIdList.push(node[0]);
     
     // groups and member resources
     groupNode.on("contextmenu", function() {
         var groupId = d3.select(this).select("title").text();
+
         var memberIds = df.getMemberNodeIdsByGroup(groupId);
 
-        if (df.nodeStatus.get(groupId) == "contextmenu") {
+        var status = df.nodeStatusTracker.get(groupId).indexOf("contextmenu");
+        if (status != -1) {
             //console.log("already clicked. Reverting");
-            df.nodeStatus.set(groupId, '');
+            df.nodeStatusTracker.get(groupId).splice(status, 1);
+
             renderOrgM(
                 df.removeNodes(nodeList, memberIds),
                 // TODO: how to deal with overlapped groups?
@@ -487,10 +521,15 @@ function attachGroupNodeListeners(elemList, groupNode) {
             );
         } else {
             //console.log("not clicked. Setting");
-            df.nodeStatus.set(groupId, "contextmenu");
+            df.nodeStatusTracker.get(groupId).push("contextmenu");
+            var newEdges = [];
+            for (var nodeId of memberIds) {
+                newEdges.push([nodeId, groupId]);
+            }
+
             renderOrgM(
                 nodeList.concat(df.getResourceNodes(memberIds)),
-                df.findEdges(nodeIdList.concat(memberIds))
+                edgeList.concat(newEdges)
             );
         }
     });
@@ -507,19 +546,22 @@ function attachGroupNodeListeners(elemList, groupNode) {
             firstLevelCapIds.push(grandParentNodeId);
         }
 
-        if (df.nodeStatus.get(groupId) == "click") {
+        var status = df.nodeStatusTracker.get(groupId).indexOf("dblclick");
+        if (status != -1) {
             //console.log("already clicked. Reverting");
-            df.nodeStatus.set(groupId, '');
+            df.nodeStatusTracker.get(groupId).splice(status, 1);
+
             renderOrgM(
                 df.removeNodes(nodeList, firstLevelCapIds),
                 df.removeEdges(edgeList, firstLevelCapIds)
             );
         } else {
             //console.log("not clicked. Setting");
-            df.nodeStatus.set(groupId, "click");
+            df.nodeStatusTracker.get(groupId).push("dblclick");
             var firstLevelCaps = [];
             var newEdges = [];
             for (var nodeId of firstLevelCapIds) {
+                df.nodeStatusTracker.set(nodeId, []);
                 firstLevelCaps.push(
                     df.createAugmentedModeNode(nodeId));
                 newEdges.push([groupId, nodeId]);
@@ -544,38 +586,36 @@ function attachResourceNodeListeners(elemList, node) {
 
 // TODO: how to scope to particular resource group?
 function attachModeNodeListeners(elemList, modeNode) {
-    /*
-    node.on("click", function() {
-        console.log("Click on a 'mode': " 
-            + d3.select(this).select("title").text());
-    });
-    */
     var [nodeList, edgeList] = elemList;
 
     var nodeIdList = [];
-    for (node of nodeList)
+    for (var node of nodeList)
         nodeIdList.push(node[0]);
 
     modeNode.on("dblclick", function() {
         var modeId = d3.select(this).select("title").text();
         
-        var childNodeIds = Array.from(df.modeTree.getChildNodes(modeId));
+        var childNodeIds = df.modeTree.getChildNodes(modeId);
         //console.log(childNodeIds);
-        //
+
+        var status = df.nodeStatusTracker.get(modeId).indexOf("dblclick");
         if (childNodeIds.length > 0) {
-            if (df.nodeStatus.get(modeId) == "click") {
+            if (status != -1) {
                 //console.log("already clicked. Reverting");
-                df.nodeStatus.set(modeId, '');
+                df.nodeStatusTracker.get(modeId).splice(status, 1);
                 renderOrgM(
-                    df.removeNodes(nodeList, childNodeIds),
-                    df.removeEdges(edgeList, childNodeIds)
+                    df.removeNodes(nodeList, 
+                        df.modeTree.getChildNodes(modeId, true)),
+                    df.removeEdges(edgeList,
+                        df.modeTree.getChildNodes(modeId, true))
                 );
             } else {
                 //console.log("not clicked. Setting");
-                df.nodeStatus.set(modeId, "click");
+                df.nodeStatusTracker.get(modeId).push("dblclick");
                 var descendants = [];
                 var newEdges = [];
                 for (var nodeId of childNodeIds) {
+                    df.nodeStatusTracker.set(nodeId, []);
                     descendants.push(
                         df.createAugmentedModeNode(nodeId));
                     newEdges.push([modeId, nodeId]);
