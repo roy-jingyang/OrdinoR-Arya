@@ -10,7 +10,6 @@
     <h2> Project Hinata </h2>
     <h4 style="font-style: italic"> "But they're here, my lord." </h4>
 
-
     <div id="container">
 
     <div id="canvas_org_m">
@@ -29,14 +28,18 @@
 <script src="../static/javascript/d3-graphviz.js"></script>
 <script src="../static/javascript/jquery-3.4.1.min.js"></script>
 
-<script src="../static/javascript/hinata.js"></script>
+<script src="../static/javascript/hinata_data.js"></script>
+<script src="../static/javascript/hinata_controller.js"></script>
 
 <script>
-    //var gviz_org_m = d3.select("#canvas_org_m").graphviz().fit(true);
-    //var cvs = d3.select("#canvas_org_m");
-    var dot_data = {{ dotstr_org_model|tojson }};
 
-    df = new Factory(dot_data);
+    // retrieve organizational model data
+    var dotData = {{ dotstr_org_model|tojson }};
+
+    const delim = '/::/'; // NOTE: must define for data exchange
+
+    var df = new DataFactory(dotData);
+    var waiter = new Waiter(df);
 
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
@@ -49,7 +52,7 @@
             .transition(transition_effect)
             .engine("dot")
             .renderDot(dotSrcString, function() {
-                attachListeners(
+                waiter.attachListeners(
                     [nodeList, edgeList],
                     d3.select("#canvas_org_m").select(".graph"));
 
@@ -57,8 +60,9 @@
         });
     }
 
-    <!-- Display all group nodes when page loaded. -->
-    renderOrgM(df.getGroupNodes(df.getAllGroupNodeIds()), []); 
+    /* Display all group nodes and all first level modes when page loaded. */
+    var [initNodeList, initEdgeList] = waiter.resetToInit();
+    renderOrgM(initNodeList, initEdgeList);
 
 </script>
 

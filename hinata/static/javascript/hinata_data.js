@@ -1,15 +1,15 @@
-
-var delim = '/::/';
-
+/***********************************************************************/
+// class for organizing the execution mode tree
 class ModeTree {
-
     // NOTE: this is not a common tree --- each node records its children.
+    // (not the other way around lol)
     constructor(modeNodeIdList, preference) {
+        this.root = this.stringifyModeTriple(['*', '*', '*']);
         this.nodes = [];
-        this.nodes.push(null);
-        for (var i = 1; i <= 3; i++) {
+        for (var i = 0; i < 4; i++) {
             this.nodes.push(new Map());
         }
+        this.nodes[0].set(this.root, new Set());
 
         this.viewType = preference;
 
@@ -47,20 +47,19 @@ class ModeTree {
             var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
             var ctattt = this.stringifyModeTriple([ct, at, tt]);
 
-            if (!this.nodes[1].has(ctXX)) {
+            this.nodes[0].get(this.root).add(ctXX);
+
+            if (!this.nodes[1].has(ctXX))
                 this.nodes[1].set(ctXX, new Set());
-            }
             this.nodes[1].get(ctXX).add(ctXtt);
                 
 
-            if (!this.nodes[2].has(ctXtt)) {
+            if (!this.nodes[2].has(ctXtt))
                 this.nodes[2].set(ctXtt, new Set());
-            }
             this.nodes[2].get(ctXtt).add(ctattt);
 
-            if (!this.nodes[3].has(ctattt)) {
+            if (!this.nodes[3].has(ctattt))
                 this.nodes[3].set(ctattt, new Set());
-            }
         }
     }
 
@@ -74,19 +73,18 @@ class ModeTree {
             var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
             var ctattt = this.stringifyModeTriple([ct, at, tt]);
 
-            if (!this.nodes[1].has(XXtt)) {
+            this.nodes[0].get(this.root).add(ctXX);
+
+            if (!this.nodes[1].has(XXtt))
                 this.nodes[1].set(XXtt, new Set());
-            }
             this.nodes[1].get(XXtt).add(ctXtt);
 
-            if (!this.nodes[2].has(ctXtt)) {
+            if (!this.nodes[2].has(ctXtt))
                 this.nodes[2].set(ctXtt, new Set());
-            }
             this.nodes[2].get(ctXtt).add(ctattt);
 
-            if (!this.nodes[3].has(ctattt)) {
+            if (!this.nodes[3].has(ctattt))
                 this.nodes[3].set(ctattt, new Set());
-            }
         }
     }
 
@@ -140,22 +138,19 @@ class ModeTree {
 
 }
 
-
-// class for handling data elements
-class Factory {
+/***********************************************************************/
+// class for handling all data elements
+// singleton class
+class DataFactory {
     constructor(dotSrcString) {
-        // singleton class
-        if (!!Factory.instance) {
-            return Factory.instance;
-        }
-
-        Factory.instance = this;
+        // check existence
+        if (!!DataFactory.instance)
+            return DataFactory.instance;
+        DataFactory.instance = this;
 
         this.nodeListResources = new Map();
         this.nodeListGroups = new Map();
         this.nodeListModes = new Map();
-
-        this.nodeStatusTracker = new Map();
 
         this.edgeListGroupsResources = new Map();
         this.edgeListGroupsModes = new Map();
@@ -181,11 +176,10 @@ class Factory {
             //elem["id"] = cleanChar(idStr);
             
             var match = /\[*\]/g.exec(attrsStr);
-            if (match) {
+            if (match)
                 var attrList = attrsStr.slice(1, match.index);
-            } else {
+            else
                 throw "Invalid data";
-            }
 
             for (var key_val of attrList.split(',\n\t\t')) {
                 //console.log(key_val.split('='));
@@ -196,39 +190,32 @@ class Factory {
 
             if (elem["_type"] == "node" && elem["_class"] == "group") {
                 this.nodeListGroups.set(id, elem);
-                this.nodeStatusTracker.set(id, []);
             }
             else if (elem["_type"] == "node" && elem["_class"] == "resource") {
                 this.nodeListResources.set(id, elem);
-                this.nodeStatusTracker.set(id, []);
             }
             else if (elem["_type"] == "node" && elem["_class"] == "mode") {
                 this.nodeListModes.set(id, elem);
-                this.nodeStatusTracker.set(id, []);
                 modeNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
                 const [groupNodeId, resourceNodeId] = id.split(' -> ');
-                if (!this.edgeListGroupsResources.has(groupNodeId)) {
+                if (!this.edgeListGroupsResources.has(groupNodeId))
                     this.edgeListGroupsResources.set(groupNodeId, []);
-                }
                 this.edgeListGroupsResources.get(groupNodeId).push(resourceNodeId);
 
-                if (!this.edgeListGroupsResources.has(resourceNodeId)) {
+                if (!this.edgeListGroupsResources.has(resourceNodeId))
                     this.edgeListGroupsResources.set(resourceNodeId, []);
-                }
                 this.edgeListGroupsResources.get(resourceNodeId).push(groupNodeId);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-mode") {
                 const [groupNodeId, modeNodeId] = id.split(' -> ');
-                if (!this.edgeListGroupsModes.has(groupNodeId)) {
+                if (!this.edgeListGroupsModes.has(groupNodeId))
                     this.edgeListGroupsModes.set(groupNodeId, []);
-                }
                 this.edgeListGroupsModes.get(groupNodeId).push(modeNodeId);
 
-                if (!this.edgeListGroupsModes.has(modeNodeId)) {
+                if (!this.edgeListGroupsModes.has(modeNodeId))
                     this.edgeListGroupsModes.set(modeNodeId, []);
-                }
                 this.edgeListGroupsModes.get(modeNodeId).push(groupNodeId);
             }
             else {
@@ -292,7 +279,17 @@ class Factory {
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
         const caps = this.edgeListGroupsModes.get(groupNodeId);
-        return caps.sort();
+        var firstLevelCapIds = new Set();
+        var secondLevelCapIds = new Set();
+        for (var capId of caps) {
+            firstLevelCapIds.add(
+                this.modeTree.getGrandParentNodeFromLeaf(capId));
+            secondLevelCapIds.add(
+                this.modeTree.getParentNodeFromLeaf(capId));
+        }
+        firstLevelCapIds = Array.from(firstLevelCapIds);
+        secondLevelCapIds = Array.from(secondLevelCapIds);
+        return (caps.concat(firstLevelCapIds, secondLevelCapIds)).sort();
     }
 
     getGroupNodeIdsByResource(resourceNodeId) {
@@ -380,7 +377,31 @@ class Factory {
         }
     }
 
-    // Helper: sort nodeList by an order of "resources > groups > modes"
+    // Helper: remove duplicates and keep only unique elements in a nodeList
+    removeDuplicateNodes(nodeList) {
+        var uniqueNodeIdList = new Set();
+        var uniqueNodeList = [];
+        for (var node of nodeList) {
+            if (!uniqueNodeIdList.has(node[0]))
+                uniqueNodeList.push(node);
+            uniqueNodeIdList.add(node[0]);
+        }
+        return uniqueNodeList;
+    }
+
+    // Helper: remove duplicates and keep only unique elements in a edgeList
+    removeDuplicateEdges(edgeList) {
+        var uniques = new Set();
+        var uniqueEdgeList = [];
+        for (var edge of edgeList) {
+            if (!uniques.has(edge.join('-')))
+                uniqueEdgeList.push(edge);
+            uniques.add(edge.join('-'));
+        }
+        return uniqueEdgeList;
+    }
+
+    // Helper: sort a nodeList by an order of "resources > groups > modes"
     compareNodeList(a, b) {
         var order = ["mode", "group", "resource"];
         var order_a = order.indexOf(a[0].split(delim)[0]);
@@ -401,30 +422,57 @@ class Factory {
     compileDotString(nodeList, edgeList) {
         // node parts
         var nodeIdList = [];
-        var nodeDotSrcString = 'node [style="filled"]\n';
+        var nodeDotSrcString ='node [style="filled",fontname="Helvetica"]';
+
+        // remove duplicates from nodeList
+        nodeList = this.removeDuplicateNodes(nodeList);
 
         // sort nodeList by the customized order
         nodeList.sort(this.compareNodeList);
 
         // make subgraphs
         var nodeClusters = new Map();
-        /*
-        nodeClusters.set("resource", []);
-        nodeClusters.set("group", []);
-        nodeClusters.set("mode", []);
-        */
 
         for (var node of nodeList) {
             var nodeType = node[0].split(delim)[0];
+            if (nodeType == "mode")
+                nodeType += "_L" + this.modeTree.getNodeLevel(node[0]);
+
             if (!nodeClusters.has(nodeType))
                 nodeClusters.set(nodeType, []);
             nodeClusters.get(nodeType).push(node);
         }
 
+        // NOTE: append redundant invisible nodes to keep subgraphs ordered
         nodeClusters.forEach(function(nodeList, nodeType, map) {
-            var string = ("subgraph " + nodeType + " {\n" +
-                (nodeType == "mode" ? '' : 'rank="same";\n'));
+            nodeList = nodeList
+            var string = "\nsubgraph " + nodeType;
+
+            string += " {\n";
             
+            var nodeStyles = '\tnode [';
+            switch(nodeType) {
+                case "resource":
+                    nodeStyles += 'color="gold",shape="ellipse",' 
+                        + 'fontsize=10';
+                    break;
+                case "group":
+                    nodeStyles += 'color="cadetblue1",shape="house",';
+                    break;
+                case "mode_L1":
+                case "mode_L2":
+                case "mode_L3":
+                    nodeStyles += 'color="gainsboro",shape="octagon",' 
+                        + 'fontsize=10';
+                    break;
+                default:
+                    // do nothing
+            }
+            string += nodeStyles + "]\n";
+
+            string += '\trank="same";\n';
+            
+            string += '\t' + nodeType + "_invis" + ' [style=invis];\n';
             for (var node of nodeList) {
                 string += '\t"' + new String(node[0]) + '"';
                 string += ' [';
@@ -432,203 +480,57 @@ class Factory {
                     if (attr[0] != '_') {
                         string += new String(attr) + '=';
                         string += '"' + new String(node[1][attr]) + '",';
+
+                    } else {
+                        // specific style for highlighted nodes
+                        if (attr == "_highlight" & node[1][attr] == true) {
+                            string += 'style="bold",fontcolor="red3",';
+                        }
                     }
                 }
                 string = string.slice(0, -1);
                 string += "];\n";
             }
-            string += "}\n";
+            string += "}";
             nodeDotSrcString = nodeDotSrcString.concat(string);
         });
 
         // edge parts
         var edgeDotSrcString = "";
-        // create edges based on all existing nodes
+        edgeList = this.removeDuplicateEdges(edgeList);
+        // create edges based on current existing nodes
         for (const [u, v] of edgeList) {
-            edgeDotSrcString = edgeDotSrcString.concat(
+            edgeDotSrcString += (
                 '"' + new String(u) + '"' + 
                 " -- " +
                 '"' + new String(v) + '";\n');
         }
 
-        return ("strict graph {" + nodeDotSrcString 
+        // NOTE: connect redundant invisible nodes to keep subgraphs ordered
+        var invisEdgeHead = null;
+        nodeClusters.forEach(function(nodeList, nodeType, map) {
+            if (invisEdgeHead == null) {
+                invisEdgeHead = nodeType + "_invis";
+            } else {
+                var invisEdgeTail = nodeType + "_invis";
+                edgeDotSrcString += (
+                    invisEdgeHead +
+                    " -- " + 
+                    invisEdgeTail + ' [style=invis];\n');
+            }
+        });
+
+        return ("strict graph {" + nodeDotSrcString + "\n\n"
             + edgeDotSrcString + "\n}");
     }
 
     createAugmentedModeNode(modeNodeId) {
         var modeNodeElem = new Object();
-        for (const [id, elem] of this.nodeListModes.entries()) {
-            for (var attr in elem) {
-                if (attr != "label")
-                    modeNodeElem[attr] = elem[attr];
-            }
-            break;
-        }
-        modeNodeElem["label"] = modeNodeId.split(delim)[1]
-            .slice(1, -1);
+        modeNodeElem["label"] = modeNodeId.split(delim)[1].slice(1, -1);
+        // the root node is "meaningless" therefore hidden
+        if (this.modeTree.getNodeLevel(modeNodeId) == 0)
+            modeNodeElem["style"] = "invis";
         return [modeNodeId, modeNodeElem];
     }
-
-
-}
-
-function attachListeners(elemList, graph) {
-    // console.log(graph);
-    // search for all node elements in an svg graph and attach listeners 
-    graph.selectAll(".node").selectAll(function() {
-        var nodeType = d3.select(this).
-            select("title").text().split(delim)[0];
-
-        switch(nodeType) {
-            case "group":
-                attachGroupNodeListeners(elemList, d3.select(this));
-                break;
-            case "resource":
-                attachResourceNodeListeners(elemList, d3.select(this));
-                break;
-            case "mode":
-                attachModeNodeListeners(elemList, d3.select(this));
-                break;
-            default:
-                // do nothing
-        }
-
-    });
-}
-
-function attachGroupNodeListeners(elemList, groupNode) {
-    var [nodeList, edgeList] = elemList;
-
-    var nodeIdList = [];
-    for (var node of nodeList)
-        nodeIdList.push(node[0]);
-    
-    // groups and member resources
-    groupNode.on("contextmenu", function() {
-        var groupId = d3.select(this).select("title").text();
-
-        var memberIds = df.getMemberNodeIdsByGroup(groupId);
-
-        var status = df.nodeStatusTracker.get(groupId).indexOf("contextmenu");
-        if (status != -1) {
-            //console.log("already clicked. Reverting");
-            df.nodeStatusTracker.get(groupId).splice(status, 1);
-
-            renderOrgM(
-                df.removeNodes(nodeList, memberIds),
-                // TODO: how to deal with overlapped groups?
-                df.removeEdges(edgeList, memberIds)
-            );
-        } else {
-            //console.log("not clicked. Setting");
-            df.nodeStatusTracker.get(groupId).push("contextmenu");
-            var newEdges = [];
-            for (var nodeId of memberIds) {
-                newEdges.push([nodeId, groupId]);
-            }
-
-            renderOrgM(
-                nodeList.concat(df.getResourceNodes(memberIds)),
-                edgeList.concat(newEdges)
-            );
-        }
-    });
-
-    // groups and capabilities
-    groupNode.on("dblclick", function() {
-        var groupId = d3.select(this).select("title").text();
-
-        var capIds = df.getCapabilityNodeIdsByGroup(groupId);
-        var firstLevelCapIds = [];
-        for (var modeNodeId of capIds) {
-            var grandParentNodeId = 
-                df.modeTree.getGrandParentNodeFromLeaf(modeNodeId);
-            firstLevelCapIds.push(grandParentNodeId);
-        }
-
-        var status = df.nodeStatusTracker.get(groupId).indexOf("dblclick");
-        if (status != -1) {
-            //console.log("already clicked. Reverting");
-            df.nodeStatusTracker.get(groupId).splice(status, 1);
-
-            renderOrgM(
-                df.removeNodes(nodeList, firstLevelCapIds),
-                df.removeEdges(edgeList, firstLevelCapIds)
-            );
-        } else {
-            //console.log("not clicked. Setting");
-            df.nodeStatusTracker.get(groupId).push("dblclick");
-            var firstLevelCaps = [];
-            var newEdges = [];
-            for (var nodeId of firstLevelCapIds) {
-                df.nodeStatusTracker.set(nodeId, []);
-                firstLevelCaps.push(
-                    df.createAugmentedModeNode(nodeId));
-                newEdges.push([groupId, nodeId]);
-            }
-
-            renderOrgM(
-                nodeList.concat(firstLevelCaps), 
-                edgeList.concat(newEdges)
-            );
-        }
-    });
-}
-
-function attachResourceNodeListeners(elemList, node) {
-    /* do nothing
-    node.on("click", function() {
-        console.log("Click on a 'resource': " 
-            + d3.select(this).select("title").text());
-    });
-    */
-}
-
-// TODO: how to scope to particular resource group?
-function attachModeNodeListeners(elemList, modeNode) {
-    var [nodeList, edgeList] = elemList;
-
-    var nodeIdList = [];
-    for (var node of nodeList)
-        nodeIdList.push(node[0]);
-
-    modeNode.on("dblclick", function() {
-        var modeId = d3.select(this).select("title").text();
-        
-        var childNodeIds = df.modeTree.getChildNodes(modeId);
-        //console.log(childNodeIds);
-
-        var status = df.nodeStatusTracker.get(modeId).indexOf("dblclick");
-        if (childNodeIds.length > 0) {
-            if (status != -1) {
-                //console.log("already clicked. Reverting");
-                df.nodeStatusTracker.get(modeId).splice(status, 1);
-                renderOrgM(
-                    df.removeNodes(nodeList, 
-                        df.modeTree.getChildNodes(modeId, true)),
-                    df.removeEdges(edgeList,
-                        df.modeTree.getChildNodes(modeId, true))
-                );
-            } else {
-                //console.log("not clicked. Setting");
-                df.nodeStatusTracker.get(modeId).push("dblclick");
-                var descendants = [];
-                var newEdges = [];
-                for (var nodeId of childNodeIds) {
-                    df.nodeStatusTracker.set(nodeId, []);
-                    descendants.push(
-                        df.createAugmentedModeNode(nodeId));
-                    newEdges.push([modeId, nodeId]);
-                }
-                renderOrgM(
-                    nodeList.concat(descendants),
-                    edgeList.concat(newEdges)
-                );
-            }
-
-        }
-        
-    });
-    
 }
 
