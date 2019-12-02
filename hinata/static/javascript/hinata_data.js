@@ -337,7 +337,7 @@ class DataFactory {
             for (var j = i + 1; j < nodeIdList.length; j++) {
                 var v = nodeIdList[j];
                 if (this.hasEdge(u, v)) {
-                    allEdges.push([u, v])
+                    allEdges.push([[u, v], {}])
                 }
             }
         }
@@ -361,19 +361,38 @@ class DataFactory {
             if (Array.isArray(nodeUId)) {
                 return edgeList.filter(function(value, index, array) {
                     return (
-                        !nodeUId.includes(value[0]) && 
-                        !nodeUId.includes(value[1]));
+                        !nodeUId.includes(value[0][0]) && 
+                        !nodeUId.includes(value[0][1]));
                 });
             } else {
                 return edgeList.filter(function(value, index, array) {
-                    return (value[0] != nodeUId && value[1] != nodeUId);
+                    return (value[0][0] != nodeUId && value[0][1] != nodeUId);
                 });
             }
 
         } else {
-            return edgeList.filter(function(value, index, array) {
-                return !(value.sort() == [nodeUId, nodeVId].sort());
-            })
+            if (Array.isArray(nodeVId) && Array.isArray(nodeUId)) {
+                throw new Error("Cannot determine edges with two parameters" +
+                    " being lists at the same time.");
+            } else if (Array.isArray(nodeVId)) {
+                return edgeList.filter(function(value, index, array) {
+                    var isEdgeInvolved = false;
+                    for (var nodeId of nodeVId) {
+                        isEdgeInvolved = (
+                            value[0].sort().join(" -- ") == 
+                            [nodeUId, nodeId].sort().join(" -- "));
+                    }
+                    return !isEdgeInvolved;
+                });
+            } else if (Array.isArray(nodeUId)) {
+                return removeEdges(edgeList, nodeVId, nodeUId);
+            } else {
+                return edgeList.filter(function(value, index, array) {
+                    return (
+                        value[0].sort().join(" -- ") != 
+                        [nodeUId, nodeVId].sort().join(" -- "));
+                });
+            }
         }
     }
 
@@ -394,9 +413,9 @@ class DataFactory {
         var uniques = new Set();
         var uniqueEdgeList = [];
         for (var edge of edgeList) {
-            if (!uniques.has(edge.join('-')))
+            if (!uniques.has(edge[0].join('-')))
                 uniqueEdgeList.push(edge);
-            uniques.add(edge.join('-'));
+            uniques.add(edge[0].join('-'));
         }
         return uniqueEdgeList;
     }
@@ -499,7 +518,10 @@ class DataFactory {
         var edgeDotSrcString = "";
         edgeList = this.removeDuplicateEdges(edgeList);
         // create edges based on current existing nodes
-        for (const [u, v] of edgeList) {
+        for (const edge of edgeList) {
+            const u = edge[0][0];
+            const v = edge[0][1];
+
             edgeDotSrcString += (
                 '"' + new String(u) + '"' + 
                 " -- " +
@@ -509,15 +531,14 @@ class DataFactory {
         // NOTE: connect redundant invisible nodes to keep subgraphs ordered
         var invisEdgeHead = null;
         nodeClusters.forEach(function(nodeList, nodeType, map) {
-            if (invisEdgeHead == null) {
-                invisEdgeHead = nodeType + "_invis";
-            } else {
+            if (invisEdgeHead != null) {
                 var invisEdgeTail = nodeType + "_invis";
                 edgeDotSrcString += (
                     invisEdgeHead +
                     " -- " + 
                     invisEdgeTail + ' [style=invis];\n');
             }
+            invisEdgeHead = nodeType + "_invis";
         });
 
         return ("strict graph {" + nodeDotSrcString + "\n\n"
@@ -527,9 +548,11 @@ class DataFactory {
     createAugmentedModeNode(modeNodeId) {
         var modeNodeElem = new Object();
         modeNodeElem["label"] = modeNodeId.split(delim)[1].slice(1, -1);
+        /*
         // the root node is "meaningless" therefore hidden
         if (this.modeTree.getNodeLevel(modeNodeId) == 0)
             modeNodeElem["style"] = "invis";
+        */
         return [modeNodeId, modeNodeElem];
     }
 }

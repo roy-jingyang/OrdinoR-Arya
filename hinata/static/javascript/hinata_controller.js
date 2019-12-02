@@ -118,43 +118,54 @@ class Waiter {
             nodeIdList.push(node[0]);
         
         // groups and member resources
-        groupNode.on("contextmenu", function() {
+        var timer = 0;
+        var prevent = false;
+        groupNode.on("click", function() {
             var groupNodeId = d3.select(this).select("title").text();
+            timer = setTimeout(function() {
+                if (!prevent) {
+                    var memberIds = self.df
+                        .getMemberNodeIdsByGroup(groupNodeId);
 
-            var memberIds = self.df.getMemberNodeIdsByGroup(groupNodeId);
+                    var status = self.nodeStatusTracker.get("groups")
+                        .get(groupNodeId).indexOf("click");
+                    if (status == -1) {
+                        //console.log("not clicked. Setting");
+                        self.nodeStatusTracker.set("focus", groupNodeId);
+                        self.nodeStatusTracker.get("groups")
+                            .get(groupNodeId).push("click");
+                        var newEdges = [];
+                        for (var nodeId of memberIds) {
+                            newEdges.push([[nodeId, groupNodeId], {}]);
+                        }
 
-            var status = self.nodeStatusTracker.get("groups")
-                .get(groupNodeId).indexOf("contextmenu");
-            if (status == -1) {
-                //console.log("not clicked. Setting");
-                self.nodeStatusTracker.set("focus", groupNodeId);
-                self.nodeStatusTracker.get("groups")
-                    .get(groupNodeId).push("contextmenu");
-                var newEdges = [];
-                for (var nodeId of memberIds) {
-                    newEdges.push([nodeId, groupNodeId]);
+                        renderOrgM(
+                            nodeList.concat(self.df
+                                .getResourceNodes(memberIds)),
+                            edgeList.concat(newEdges)
+                        );
+                    } else {
+                        //console.log("already clicked. Reverting");
+                        self.nodeStatusTracker.set("focus", null);
+                        self.nodeStatusTracker.get("groups")
+                            .get(groupNodeId).splice(status, 1);
+
+                        renderOrgM(
+                            self.df.removeNodes(nodeList, memberIds),
+                            // TODO: how to deal with overlapped groups?
+                            self.df.removeEdges(edgeList, memberIds)
+                        );
+                    }
                 }
-
-                renderOrgM(
-                    nodeList.concat(self.df.getResourceNodes(memberIds)),
-                    edgeList.concat(newEdges)
-                );
-            } else {
-                //console.log("already clicked. Reverting");
-                self.nodeStatusTracker.set("focus", null);
-                self.nodeStatusTracker.get("groups")
-                    .get(groupNodeId).splice(status, 1);
-
-                renderOrgM(
-                    self.df.removeNodes(nodeList, memberIds),
-                    // TODO: how to deal with overlapped groups?
-                    self.df.removeEdges(edgeList, memberIds)
-                );
-            }
+                prevent = false;
+            }, 800);
         });
 
         // groups and capabilities
         groupNode.on("dblclick", function() {
+            clearTimeout(timer);
+            prevent = true;
+
             var groupNodeId = d3.select(this).select("title").text();
 
             var capIds = self.df.getCapabilityNodeIdsByGroup(groupNodeId);
@@ -165,6 +176,7 @@ class Waiter {
                     .getGrandParentNodeFromLeaf(modeNodeId);
                 allFirstLevelCapIds.add(grandParentNodeId);
             }
+            allFirstLevelCapIds = Array.from(allFirstLevelCapIds);
 
             var status = self.nodeStatusTracker.get("groups")
                 .get(groupNodeId).indexOf("dblclick");
@@ -182,7 +194,7 @@ class Waiter {
                     allFirstLevelCaps.push(
                         self.df.createAugmentedModeNode(nodeId));
                     if (capIds.indexOf(nodeId) != -1)
-                        newEdges.push([groupNodeId, nodeId]);
+                        newEdges.push([[groupNodeId, nodeId], {}]);
                 }
 
                 renderOrgM(
@@ -192,7 +204,7 @@ class Waiter {
                     edgeList.concat(newEdges)
                 );
             } else {
-                //console.log("already clicked. Reverting");
+                console.log("already clicked. Reverting");
                 self.nodeStatusTracker.set("focus", null);
                 self.nodeStatusTracker.get("groups")
                     .get(groupNodeId).splice(status, 1);
@@ -205,12 +217,18 @@ class Waiter {
                 }
                 allChildNodeIds = Array.from(allChildNodeIds);
 
+                var newEdgeList = self.df.removeEdges(edgeList,
+                    allChildNodeIds);
+                newEdgeList = self.df.removeEdges(newEdgeList,
+                    groupNodeId, allFirstLevelCapIds);
+
                 renderOrgM(
                     self.highlightNodesById(
                         self.df.removeNodes(nodeList, allChildNodeIds),
                         null, false),
-                    []
+                    newEdgeList
                 );
+                renderProcMDot(null);
             }
         });
     }
@@ -236,18 +254,14 @@ class Waiter {
 
         modeNode.on("dblclick", function() {
             var modeNodeId = d3.select(this).select("title").text();
-            
+            var currentGroup = self.nodeStatusTracker.get("focus");
+            var capIds = (currentGroup == null ? 
+                null : self.df.getCapabilityNodeIdsByGroup(currentGroup));
             var childNodeIds = self.df.modeTree.getChildNodes(modeNodeId);
-            //var childNodeCapIds = ;
-            //console.log(childNodeIds);
-
-            if (childNodeIds.length > 0) {
+            
+            if (self.df.modeTree.getNodeLevel(modeNodeId) < 2) {
                 var status = self.nodeStatusTracker.get("modes")
                     .get(modeNodeId).indexOf("dblclick");
-
-                var currentGroup = self.nodeStatusTracker.get("focus");
-                var capIds = (currentGroup == null ? 
-                    null : self.df.getCapabilityNodeIdsByGroup(currentGroup));
 
                 if (status == -1) {
                     //console.log("not clicked. Setting");
@@ -261,12 +275,12 @@ class Waiter {
                             .set(nodeId, []);
                         descendants.push(
                             self.df.createAugmentedModeNode(nodeId));
-                        newEdges.push([modeNodeId, nodeId]);
+                        newEdges.push([[modeNodeId, nodeId], {}]);
                     }
                     renderOrgM(
                         self.highlightNodesById(
                             nodeList.concat(descendants),
-                            capIds, true ? capIds != null : false),
+                            capIds, (capIds != null)),
                         edgeList.concat(newEdges)
                     );
                 } else {
@@ -280,6 +294,26 @@ class Waiter {
                             self.df.modeTree.getChildNodes(modeNodeId, true))
                     );
                 }
+            } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 2) {
+                // click on second level execution modes
+                var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+                var atsHighlighted = [];
+                for (var childNodeId of childNodeIds) {
+                    if (capIds != null && capIds.includes(childNodeId)) {
+                        atsHighlighted.push(
+                            self.df.modeTree.parseModeTriple(childNodeId)[1]);
+                    }
+                }
+                
+                renderProcMDot(null);
+                alert("Please wait for process model visualization" +
+                    " to be refreshed.");
+                var procMTitle = '(' + [ct, x, tt].join(',') + ')';
+                d3.request('./get_process_model/' 
+                    + ct + '/' + atsHighlighted.join(','))
+                    .get(function(xhr) {
+                    renderProcMDot(xhr.response, procMTitle);
+                });
             }
             
         });

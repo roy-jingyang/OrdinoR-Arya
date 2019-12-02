@@ -13,11 +13,13 @@
     <div id="container">
 
     <div id="canvas_org_m">
-        This is the canvas for plotting an organizational model.
+        Canvas for plotting an organizational model.
     </div>
 
     <div id="canvas_proc_m">
-        This is the canvas for plotting a process model.
+        Canvas for plotting a process model of:
+        <div id="proc_m_title">
+        </div>
     </div>
 
     </div>
@@ -58,6 +60,24 @@
 
                 d3.select("svg").on("dblclick.zoom", null);
         });
+    }
+
+    function renderProcMDot(dotSrcString, title) {
+        d3.select("div#proc_m_title").text(title);
+        if (dotSrcString == null) {
+            d3.select("#canvas_proc_m").selectAll("svg > *").remove();
+        } else {
+            console.log("Renderer invoked for process model.");
+            var transition_effect = d3.transition()
+                .duration(100).ease(d3.easeLinear);
+            
+            d3.select("#canvas_proc_m").graphviz().fit(true)
+                .transition(transition_effect)
+                .engine("dot")
+                .renderDot(dotSrcString, function() {
+                    alert("Process model has been refreshed.");
+                });
+        }
     }
 
     /* Display all group nodes and all first level modes when page loaded. */
