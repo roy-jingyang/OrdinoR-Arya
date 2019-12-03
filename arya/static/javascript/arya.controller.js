@@ -372,17 +372,5 @@ class Waiter {
         
     }
 
-    attachButtonListeners(allButtons) {
-        allButtons.on("click", function(button) {
-            switch (this["id"]) {
-                case "download_org_m_vis":
-                    break;
-                case "download_proc_m_vis":
-                    break;
-                default:
-                    // do nothing
-            }
-        });
-    }
 }
 

@@ -13,14 +13,14 @@
     <div id="container">
 
     <div id="canvas_org_m">
-        <!-- <button id="download_org_m_vis" type="button"> Download SVG </button>
-        -->
+        <button id="download_org_m_vis" label="organizational_model" 
+            type="button"> Download </button>
         Canvas for plotting an organizational model.
     </div>
 
     <div id="canvas_proc_m">
-        <!-- <button id="download_proc_m_vis" type="button"> Download SVG </button>
-        -->
+        <button id="download_proc_m_vis" label="process_model"
+            type="button"> Download </button>
         Canvas for plotting a process model of:
         <div id="proc_m_title"></div>
     </div>
@@ -32,9 +32,10 @@
 <script src="../static/javascript/viz.js"></script>
 <script src="../static/javascript/d3-graphviz.js"></script>
 <script src="../static/javascript/jquery-3.4.1.min.js"></script>
+<script src="../static/javascript/d3-save-svg.min.js"></script>
 
-<script src="../static/javascript/arya_data.js"></script>
-<script src="../static/javascript/arya_controller.js"></script>
+<script src="../static/javascript/arya.data.js"></script>
+<script src="../static/javascript/arya.controller.js"></script>
 
 <script>
 
@@ -45,8 +46,6 @@
 
     var df = new DataFactory(dotData);
     var waiter = new Waiter(df);
-
-    waiter.attachButtonListeners(d3.selectAll("button"));
 
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
@@ -63,8 +62,8 @@
                     [nodeList, edgeList],
                     d3.select("#canvas_org_m").select(".graph"));
 
-                d3.select("svg").on("dblclick.zoom", null);
-        });
+                d3.select("div#canvas_org_m > svg").on("dblclick.zoom", null);
+            });
     }
 
     function renderProcMDot(dotSrcString, title) {
@@ -80,6 +79,8 @@
                 .transition(transition_effect)
                 .engine("dot")
                 .renderDot(dotSrcString, function() {
+                    d3.select("div#canvas_proc_m > svg").on(
+                        "dblclick.zoom", null);
                 });
         }
     }
@@ -87,6 +88,11 @@
     /* Display all group nodes and all first level modes when page loaded. */
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
+
+    d3.selectAll("button").on("click", function() {
+        d3_save_svg.save(d3.select(this.parentNode).select("svg")
+            .node(), {filename: this.getAttribute("label")});
+    });
 
 </script>
 
