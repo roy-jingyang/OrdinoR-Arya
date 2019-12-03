@@ -2,12 +2,12 @@
 <html lang="en">
 
 <head>
-    <title> Hinata </title>
-    <link rel="stylesheet" type="text/css" href="../static/css/hinata.css">
+    <title> Arya </title>
+    <link rel="stylesheet" type="text/css" href="../static/css/arya.css">
 </head>
 
 <body>
-    <h2> Project Hinata </h2>
+    <h2> Project Arya </h2>
     <h4 style="font-style: italic"> "But they're here, my lord." </h4>
 
     <div id="container">
@@ -33,8 +33,8 @@
 <script src="../static/javascript/d3-graphviz.js"></script>
 <script src="../static/javascript/jquery-3.4.1.min.js"></script>
 
-<script src="../static/javascript/hinata_data.js"></script>
-<script src="../static/javascript/hinata_controller.js"></script>
+<script src="../static/javascript/arya_data.js"></script>
+<script src="../static/javascript/arya_controller.js"></script>
 
 <script>
 
@@ -50,7 +50,7 @@
 
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
-        console.log("Renderer invoked for source:\n\n" + dotSrcString);
+        console.log("Renderer invoked for source:\n" + dotSrcString);
 
         var transition_effect = d3.transition()
             .duration(500).ease(d3.easeLinear);

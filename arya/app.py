@@ -26,8 +26,8 @@ def get_process_model_with_highlights(case_type, hl_activity_types):
 
 def build_dot_strings_om():
     # TODO: hard-coded file for debugging
-    fn = './hinata/static/demo/wabo_fullCA-AHC-CF.om'
-    #fn = './hinata/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
+    fn = './arya/static/demo/wabo_fullCA-AHC-CF.om'
+    #fn = './arya/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
@@ -38,7 +38,7 @@ def build_dot_strings_om():
 
     # TODO: debug use
     N_groups = 3
-    N_modes = 5
+    N_modes = 3
     i = 0
 
     for og_id, og in om.find_all_groups():
@@ -84,8 +84,8 @@ def build_dot_strings_om():
 #def discover_process_model(el, case_type=None, time_type=None):
 def discover_process_model(case_type=None, hl_activity_types=None):
     # TODO: hard-coded file for debugging
-    fn_log = './hinata/static/demo/wabo.csv'
-    fn_log_xes = './hinata/static/demo/wabo.xes'
+    fn_log = './arya/static/demo/wabo.csv'
+    fn_log_xes = './arya/static/demo/wabo.xes'
 
     from pm4py.objects.log.importer.xes import factory as xes_import_factory
     log = xes_import_factory.apply(fn_log_xes)
@@ -123,13 +123,17 @@ def discover_process_model(case_type=None, hl_activity_types=None):
     graph = pgv.AGraph(gviz.source)
     for node in graph.nodes_iter():
         if node.attr['shape'] == 'box' and node.attr['label'] != '':
-            # trim the count from DFG
+            # trim the count in the labels from DFG
             node.attr['label'] = _trim_activity_label_tail(
                 node.attr['label'], r' \(\d+\)')
+            node.attr['fontname'] = 'Helvetica'
             if ('AT.' + node.attr['label']) in sel_activity_types:
                 # highlight
                 node.attr['style'] = 'bold'
                 node.attr['fontcolor'] = 'red3'
+            else:
+                node.attr['style'] = 'filled'
+                node.attr['fillcolor'] = 'gainsboro'
 
     return graph.string()
 

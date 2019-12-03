@@ -499,15 +499,23 @@ class DataFactory {
                     if (attr[0] != '_') {
                         string += new String(attr) + '=';
                         string += '"' + new String(node[1][attr]) + '",';
-
                     } else {
                         // specific style for highlighted nodes
-                        if (attr == "_highlight" & node[1][attr] == true) {
-                            string += 'style="bold",fontcolor="red3",';
+                        switch (attr) {
+                            case "_highlightmode":
+                                if (node[1][attr] == true)
+                                    string += 'style="bold",fontcolor="red3",';
+                                break;
+                            case "_highlightgroup":
+                                if (node[1][attr] == true)
+                                    string += 'style="bold",fontcolor="red4",';
+                                break;
+                            default:
+                                // do nothing
                         }
                     }
                 }
-                string = string.slice(0, -1);
+                //string = string.slice(0, -1);
                 string += "];\n";
             }
             string += "}";
@@ -522,10 +530,23 @@ class DataFactory {
             const u = edge[0][0];
             const v = edge[0][1];
 
-            edgeDotSrcString += (
+            var string = (
                 '"' + new String(u) + '"' + 
                 " -- " +
-                '"' + new String(v) + '";\n');
+                '"' + new String(v)) + '"';
+
+            string += ' [';
+            for (const attr in edge[1]) {
+                if (attr[0] != '_') {
+                    string += new String(attr) + '=';
+                    string += '"' + new String(edge[1][attr]) + '",';
+                } else {
+                    // do nothing
+                }
+            }
+            //string = string.slice(0, -1);
+            string += "];\n";
+            edgeDotSrcString = edgeDotSrcString.concat(string);
         }
 
         // NOTE: connect redundant invisible nodes to keep subgraphs ordered

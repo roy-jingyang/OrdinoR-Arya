@@ -36,21 +36,45 @@ class Waiter {
         }
     }
 
-    highlightNodesById(nodeList, nbunch, flag) {
+    highlightModeNodesById(nodeList, modeIdBunch, flag) {
         var newNodeList = [];
         nodeList.forEach(function(node) {
             if (flag == true) {
-                if (nbunch.includes(node[0])) {
+                if (modeIdBunch.includes(node[0])) {
                     var dressedNode = Object.assign({}, node[1]);
-                    dressedNode["_highlight"] = true;
+                    dressedNode["_highlightmode"] = true;
                     newNodeList.push([node[0], dressedNode]);
                 } else {
                     newNodeList.push(node);
                 }
             } else {
-                if (node[1]["_highlight"] != undefined) {
+                if (node[1]["_highlightmode"] != undefined) {
                     var unDressedNode = Object.assign({}, node[1]);
-                    delete unDressedNode["_highlight"];
+                    delete unDressedNode["_highlightmode"];
+                    newNodeList.push([node[0], unDressedNode]);
+                } else {
+                    newNodeList.push(node);
+                }
+            }
+        });
+        return newNodeList;
+    }
+
+    highlightGroupNodebyId(nodeList, groupId, flag) {
+        var newNodeList = [];
+        nodeList.forEach(function(node) {
+            if (flag == true) {
+                if (groupId == node[0]) {
+                    var dressedNode = Object.assign({}, node[1]);
+                    dressedNode["_highlightgroup"] = true;
+                    newNodeList.push([node[0], dressedNode]);
+                } else {
+                    newNodeList.push(node);
+                }
+            } else {
+                if (node[1]["_highlightgroup"] != undefined) {
+                    var unDressedNode = Object.assign({}, node[1]);
+                    delete unDressedNode["_highlightgroup"];
                     newNodeList.push([node[0], unDressedNode]);
                 } else {
                     newNodeList.push(node);
@@ -136,7 +160,8 @@ class Waiter {
                             .get(groupNodeId).push("click");
                         var newEdges = [];
                         for (var nodeId of memberIds) {
-                            newEdges.push([[nodeId, groupNodeId], {}]);
+                            newEdges.push([
+                                [nodeId, groupNodeId], {color: "gold"}]);
                         }
 
                         renderOrgM(
@@ -158,7 +183,7 @@ class Waiter {
                     }
                 }
                 prevent = false;
-            }, 800);
+            }, 750);
         });
 
         // groups and capabilities
@@ -184,38 +209,48 @@ class Waiter {
                 //console.log("not clicked. Setting");
                 self.nodeStatusTracker.set("focus", groupNodeId);
 
-                // broadcasting changes: there can only be one focus
+                // switch focus: there can only be one
+                // remove all interaction markings from other nodes
                 self.nodeStatusTracker.get("groups").forEach(
                     function(statusList, id, map) {
-                        if (id == groupNodeId) {
+                        if (id == groupNodeId)
                             statusList.push("dblclick");
-                        } else {
-                            statusList.splice(status, 1);
-                        }
+                        else
+                            statusList.splice("dblclick", 1);
                 });
+                // remove all highlights
+                var newNodeList = self.highlightModeNodesById(nodeList,
+                    null, false);
+                newNodeList = self.highlightGroupNodebyId(newNodeList,
+                    null, false);
+                // highlight current focus
+                newNodeList = self.highlightGroupNodebyId(newNodeList,
+                    groupNodeId, true);
                 
-                // TODO: how to switch focus?
-
                 var allFirstLevelCaps = [];
                 var newEdges = [];
                 for (var nodeId of allFirstLevelCapIds) {
-                    self.nodeStatusTracker.get("modes")
-                        .set(nodeId, []);
+                    //self.nodeStatusTracker.get("modes").set(nodeId, []);
                     allFirstLevelCaps.push(
                         self.df.createAugmentedModeNode(nodeId));
                     if (capIds.indexOf(nodeId) != -1)
-                        newEdges.push([[groupNodeId, nodeId], {}]);
+                        newEdges.push(
+                            [[groupNodeId, nodeId], {color: "cadetblue1"}]);
                 }
+                
+                // highlight related capabilities
+                newNodeList = self.highlightModeNodesById(
+                    newNodeList.concat(allFirstLevelCaps), capIds, true);
 
                 renderOrgM(
-                    self.highlightNodesById(
-                        nodeList.concat(allFirstLevelCaps), 
-                        capIds, true),
+                    newNodeList,
                     edgeList.concat(newEdges)
                 );
             } else {
                 //console.log("already clicked. Reverting");
+                // remove focus
                 self.nodeStatusTracker.set("focus", null);
+                // remove interaction marking
                 self.nodeStatusTracker.get("groups")
                     .get(groupNodeId).splice(status, 1);
 
@@ -227,15 +262,22 @@ class Waiter {
                 }
                 allChildNodeIds = Array.from(allChildNodeIds);
 
-                var newEdgeList = self.df.removeEdges(edgeList,
-                    allChildNodeIds);
-                newEdgeList = self.df.removeEdges(newEdgeList,
-                    groupNodeId, allFirstLevelCapIds);
+                // remove all highlights
+                var newNodeList = self.highlightModeNodesById(
+                    //self.df.removeNodes(nodeList, allChildNodeIds),
+                    nodeList,
+                    null, false);
+                newNodeList = self.highlightGroupNodebyId(newNodeList, 
+                    groupNodeId, false);
+
+                var newEdgeList = edgeList;
+                //var newEdgeList = self.df.removeEdges(edgeList,
+                //    allChildNodeIds);
+                //newEdgeList = self.df.removeEdges(newEdgeList,
+                //    groupNodeId, allFirstLevelCapIds);
 
                 renderOrgM(
-                    self.highlightNodesById(
-                        self.df.removeNodes(nodeList, allChildNodeIds),
-                        null, false),
+                    newNodeList,
                     newEdgeList
                 );
                 renderProcMDot(null);
@@ -269,6 +311,7 @@ class Waiter {
             var childNodeIds = self.df.modeTree.getChildNodes(modeNodeId);
             
             if (self.df.modeTree.getNodeLevel(modeNodeId) < 2) {
+                // dblclick on first level execution modes
                 var status = self.nodeStatusTracker.get("modes")
                     .get(modeNodeId).indexOf("dblclick");
 
@@ -287,7 +330,7 @@ class Waiter {
                         newEdges.push([[modeNodeId, nodeId], {}]);
                     }
                     renderOrgM(
-                        self.highlightNodesById(
+                        self.highlightModeNodesById(
                             nodeList.concat(descendants),
                             capIds, (capIds != null)),
                         edgeList.concat(newEdges)
@@ -304,7 +347,7 @@ class Waiter {
                     );
                 }
             } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 2) {
-                // click on second level execution modes
+                // dblclick on second level execution modes
                 var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
                 var atsHighlighted = [];
                 for (var childNodeId of childNodeIds) {
