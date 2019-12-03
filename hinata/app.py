@@ -65,7 +65,7 @@ def build_dot_strings_om():
                 _class='group-resource', _type='edge')
 
         # capable execution modes, and connecting edges to groups
-        exec_modes = om.find_group_execution_modes(og_id)[:N_modes] # TODO
+        exec_modes = om.find_group_execution_modes(og_id)[:] # TODO
         for em in exec_modes:
             ct, at, tt = em[0], em[1], em[2]
             mode_node_id = 'mode' + delim + '({},{},{})'.format(ct, at, tt)

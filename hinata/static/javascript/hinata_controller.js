@@ -78,7 +78,7 @@ class Waiter {
 
     }
 
-    attachListeners(elemList, graph) {
+    attachSVGListeners(elemList, graph) {
         var self = this;
 
         // console.log(graph);
@@ -183,8 +183,18 @@ class Waiter {
             if (status == -1) {
                 //console.log("not clicked. Setting");
                 self.nodeStatusTracker.set("focus", groupNodeId);
-                self.nodeStatusTracker.get("groups")
-                    .get(groupNodeId).push("dblclick");
+
+                // broadcasting changes: there can only be one focus
+                self.nodeStatusTracker.get("groups").forEach(
+                    function(statusList, id, map) {
+                        if (id == groupNodeId) {
+                            statusList.push("dblclick");
+                        } else {
+                            statusList.splice(status, 1);
+                        }
+                });
+                
+                // TODO: how to switch focus?
 
                 var allFirstLevelCaps = [];
                 var newEdges = [];
@@ -204,7 +214,7 @@ class Waiter {
                     edgeList.concat(newEdges)
                 );
             } else {
-                console.log("already clicked. Reverting");
+                //console.log("already clicked. Reverting");
                 self.nodeStatusTracker.set("focus", null);
                 self.nodeStatusTracker.get("groups")
                     .get(groupNodeId).splice(status, 1);
@@ -242,7 +252,6 @@ class Waiter {
         */
     }
 
-    // TODO: how to scope to particular resource group?
     attachModeNodeListeners(elemList, modeNode) {
         var self = this;
 
@@ -320,5 +329,17 @@ class Waiter {
         
     }
 
+    attachButtonListeners(allButtons) {
+        allButtons.on("click", function(button) {
+            switch (this["id"]) {
+                case "download_org_m_vis":
+                    break;
+                case "download_proc_m_vis":
+                    break;
+                default:
+                    // do nothing
+            }
+        });
+    }
 }
 
