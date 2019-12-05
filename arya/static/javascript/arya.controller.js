@@ -96,7 +96,7 @@ class Waiter {
         }
         var initialNodeList = allGroupNodes.concat(allFirstLevelModeNodes);
 
-        var initialEdgeList = this.df.findEdges(initialNodeList);
+        var initialEdgeList = [];
 
         return [initialNodeList, initialEdgeList];
 
@@ -161,7 +161,11 @@ class Waiter {
                         var newEdges = [];
                         for (var nodeId of memberIds) {
                             newEdges.push([
-                                [nodeId, groupNodeId], {color: "gold"}]);
+                                [nodeId, groupNodeId], 
+                                Object.assign(
+                                    {color: "gold"},
+                                    self.df.getEdgeAttr(nodeId, groupNodeId)
+                                )]);
                         }
 
                         renderOrgM(
@@ -234,8 +238,10 @@ class Waiter {
                     allFirstLevelCaps.push(
                         self.df.createAugmentedModeNode(nodeId));
                     if (capIds.indexOf(nodeId) != -1)
-                        newEdges.push(
-                            [[groupNodeId, nodeId], {color: "cadetblue1"}]);
+                        newEdges.push([
+                            [groupNodeId, nodeId], 
+                            {color: "cadetblue1"},
+                        ]);
                 }
                 
                 // highlight related capabilities

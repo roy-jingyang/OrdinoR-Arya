@@ -7,20 +7,20 @@
 </head>
 
 <body>
-    <h2> Project Arya </h2>
-    <h4 style="font-style: italic"> "But they're here, my lord." </h4>
+    <h3> Project Arya </h2>
+    <h5 style="font-style: italic"> "But they're here, my lord." </h4>
 
     <div id="container">
 
     <div id="canvas_org_m">
         <button id="download_org_m_vis" label="organizational_model" 
-            type="button"> Download </button>
+            type="button"> Export SVG </button>
         Canvas for plotting an organizational model.
     </div>
 
     <div id="canvas_proc_m">
         <button id="download_proc_m_vis" label="process_model"
-            type="button"> Download </button>
+            type="button"> Export SVG </button>
         Canvas for plotting a process model of:
         <div id="proc_m_title"></div>
     </div>
@@ -89,6 +89,7 @@
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
+    /* Attach listeners for svg downloading. */
     d3.selectAll("button").on("click", function() {
         d3_save_svg.save(d3.select(this.parentNode).select("svg")
             .node(), {filename: this.getAttribute("label")});

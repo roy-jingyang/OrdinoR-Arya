@@ -196,27 +196,32 @@ class DataFactory {
             }
             else if (elem["_type"] == "node" && elem["_class"] == "mode") {
                 this.nodeListModes.set(id, elem);
+
                 modeNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
                 const [groupNodeId, resourceNodeId] = id.split(' -> ');
                 if (!this.edgeListGroupsResources.has(groupNodeId))
-                    this.edgeListGroupsResources.set(groupNodeId, []);
-                this.edgeListGroupsResources.get(groupNodeId).push(resourceNodeId);
+                    this.edgeListGroupsResources.set(groupNodeId, new Map());
+                this.edgeListGroupsResources.get(groupNodeId)
+                    .set(resourceNodeId, elem);
 
                 if (!this.edgeListGroupsResources.has(resourceNodeId))
-                    this.edgeListGroupsResources.set(resourceNodeId, []);
-                this.edgeListGroupsResources.get(resourceNodeId).push(groupNodeId);
+                    this.edgeListGroupsResources.set(resourceNodeId, new Map());
+                this.edgeListGroupsResources.get(resourceNodeId)
+                    .set(groupNodeId, elem);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-mode") {
                 const [groupNodeId, modeNodeId] = id.split(' -> ');
                 if (!this.edgeListGroupsModes.has(groupNodeId))
-                    this.edgeListGroupsModes.set(groupNodeId, []);
-                this.edgeListGroupsModes.get(groupNodeId).push(modeNodeId);
+                    this.edgeListGroupsModes.set(groupNodeId, new Map());
+                this.edgeListGroupsModes.get(groupNodeId)
+                    .set(modeNodeId, elem);
 
                 if (!this.edgeListGroupsModes.has(modeNodeId))
-                    this.edgeListGroupsModes.set(modeNodeId, []);
-                this.edgeListGroupsModes.get(modeNodeId).push(groupNodeId);
+                    this.edgeListGroupsModes.set(modeNodeId, new Map());
+                this.edgeListGroupsModes.get(modeNodeId)
+                    .set(groupNodeId, elem);
             }
             else {
                 throw "Invalid data";
@@ -273,12 +278,14 @@ class DataFactory {
     }
 
     getMemberNodeIdsByGroup(groupNodeId) {
-        const members = this.edgeListGroupsResources.get(groupNodeId);
+        const members = Array.from(
+            this.edgeListGroupsResources.get(groupNodeId).keys());
         return members.sort();
     }
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
-        const caps = this.edgeListGroupsModes.get(groupNodeId);
+        const caps = Array.from(
+            this.edgeListGroupsModes.get(groupNodeId).keys());
         var firstLevelCapIds = new Set();
         var secondLevelCapIds = new Set();
         for (var capId of caps) {
@@ -293,12 +300,14 @@ class DataFactory {
     }
 
     getGroupNodeIdsByResource(resourceNodeId) {
-        const groups = this.edgeListGroupsResources.get(resourceNodeId);
+        const groups = Array.from(
+            this.edgeListGroupsResources.get(resourceNodeId).keys());
         return groups.sort();
     }
 
     getGroupNodeIdsByMode(modeNodeId) {
-        const groups = this.edgeListGroupsModes.get(modeNodeId);
+        const groups = Array.from(
+            this.edgeListGroupsModes.get(modeNodeId).keys());
         return groups.sort();
     }
 
@@ -326,9 +335,40 @@ class DataFactory {
         else {
             return false;
         }
-
     }
 
+    getEdgeAttr(nodeUId, nodeVId) {
+        if (this.hasEdge(nodeUId, nodeVId)) {
+            if (nodeUId.indexOf("group") == 0) {
+                if (nodeVId.indexOf("group") == 0) {
+                    // TODO: connections among groups
+                    return undefined;
+                }
+                else if (nodeVId.indexOf("resource") == 0) {
+                    return this.edgeListGroupsResources
+                        .get(nodeUId).get(nodeVId);
+                }
+                else if (nodeVId.indexOf("mode") == 0) {
+                    return this.edgeListGroupsModes
+                        .get(nodeUId).get(nodeVId);
+                }
+                else {
+                    return undefined;
+                }
+            }
+            else if (nodeVId.indexOf("group") == 0) {
+                return this.getEdgeAttr(nodeVId, nodeUId);
+            }
+            else {
+                return undefined;
+            }
+        } else {
+            return undefined;
+        }
+    }
+
+    /*
+     * DEPRECATED : no longer in use and should not be.
     findEdges(nodeIdList) {
         // return pairwise edges given a list of nodes (if they exist)
         var allEdges = [];
@@ -343,6 +383,7 @@ class DataFactory {
         }
         return allEdges;
     }
+    */
 
     removeNodes(nodeList, nodeId) {
         if (Array.isArray(nodeId)) {
@@ -439,10 +480,11 @@ class DataFactory {
     }
 
     compileDotString(nodeList, edgeList) {
-        // node parts
-        var nodeIdList = [];
-        var nodeDotSrcString ='node [style="filled",fontname="Helvetica"]';
+        var globalStyleString = 'node [style="filled",fontname="Helvetica"]\n'
+            + 'edge[fontname="Helvetica",fontsize=8]\n';
 
+        // node parts
+        var nodeDotSrcString = "";
         // remove duplicates from nodeList
         nodeList = this.removeDuplicateNodes(nodeList);
 
@@ -538,7 +580,10 @@ class DataFactory {
             string += ' [';
             for (const attr in edge[1]) {
                 if (attr[0] != '_') {
-                    string += new String(attr) + '=';
+                    if (attr == "contribution")
+                        string += "label" + '=';
+                    else
+                        string += new String(attr) + '=';
                     string += '"' + new String(edge[1][attr]) + '",';
                 } else {
                     // do nothing
@@ -562,7 +607,8 @@ class DataFactory {
             invisEdgeHead = nodeType + "_invis";
         });
 
-        return ("strict graph {" + nodeDotSrcString + "\n\n"
+        return ("strict graph {\n" + globalStyleString
+            + nodeDotSrcString + "\n\n"
             + edgeDotSrcString + "\n}");
     }
 

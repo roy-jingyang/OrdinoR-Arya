@@ -9,6 +9,7 @@ import pygraphviz as pgv
 
 delim = '/::/'
 
+####################### Routers ########################################
 @app.route('/')
 def main():
     # load data
@@ -16,22 +17,46 @@ def main():
     return render_template('index.html',
         dotstr_org_model=dotstr_org_model)
 
+
 @app.route('/get_process_model/<case_type>/')
 def get_process_model(case_type):
     return discover_process_model(case_type, [])
+
 
 @app.route('/get_process_model/<case_type>/<hl_activity_types>')
 def get_process_model_with_highlights(case_type, hl_activity_types):
     return discover_process_model(case_type, hl_activity_types.split(','))
 
+
+####################### Functions ######################################
 def build_dot_strings_om():
     # TODO: hard-coded file for debugging
     fn = './arya/static/demo/wabo_fullCA-AHC-CF.om'
     #fn = './arya/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
+    fn_log = './arya/static/demo/wabo.csv'
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
         om = OrganizationalModel.from_file_csv(f)
+
+    from orgminer.IO.reader import read_disco_csv
+    with open(fn_log, 'r') as f:
+        el = read_disco_csv(f, mapping={'(case) channel': 6})
+
+    # TODO: convert to resource log
+    from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
+    from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
+
+    mode_miner = FullMiner(el, 
+        case_attr_name='(case) channel', resolution='weekday')
+    #mode_miner = TraceClusteringFullMiner(el,
+    #    fn_partition='input/extra_knowledge/bpic12.bosek5.tcreport', resolution='weekday')
+
+    rl = mode_miner.derive_resource_log(el)
+
+    # TODO: calculate the diagnostic measures
+    from orgminer.Evaluation.l2m.diagnostics import test_measure
+    member_load_distribution = test_measure(rl, om) 
 
     # construct organizational model DOT string
     graph = pgv.AGraph(strict=True, directed=True)
@@ -62,7 +87,9 @@ def build_dot_strings_om():
             graph.add_edge(
                 group_node_id,
                 resource_node_id,
-                _class='group-resource', _type='edge')
+                _class='group-resource', _type='edge',
+                contribution='{:.0%}'.format(
+                    member_load_distribution[og_id][resource]))
 
         # capable execution modes, and connecting edges to groups
         exec_modes = om.find_group_execution_modes(og_id)[:] # TODO
@@ -80,6 +107,7 @@ def build_dot_strings_om():
         i += 1 # TODO
 
     return graph.string()
+
 
 #def discover_process_model(el, case_type=None, time_type=None):
 def discover_process_model(case_type=None, hl_activity_types=None):
