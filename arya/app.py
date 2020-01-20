@@ -18,12 +18,30 @@ def main():
         dotstr_org_model=dotstr_org_model)
 
 
-@app.route('/get_process_model/<case_type>/')
+@app.route('/index')
+def config_panel():
+    return render_template('index2.html')
+
+
+@app.route('/view')
+def view_results():
+    pass
+
+
+from flask import request
+@app.route('/mine_org_model', methods=['POST'])
+def get_org_model():
+    pass
+
+
+# Discover a process model correspondingly
+@app.route('/mine_process_model/<case_type>/')
 def get_process_model(case_type):
     return discover_process_model(case_type, [])
 
 
-@app.route('/get_process_model/<case_type>/<hl_activity_types>')
+# Discover a process model correspondingly (with nodes highlighted)
+@app.route('/mine_process_model/<case_type>/<hl_activity_types>')
 def get_process_model_with_highlights(case_type, hl_activity_types):
     return discover_process_model(case_type, hl_activity_types.split(','))
 
@@ -31,14 +49,21 @@ def get_process_model_with_highlights(case_type, hl_activity_types):
 ####################### Functions ######################################
 def build_dot_strings_om():
     # TODO: hard-coded file for debugging
-    fn = './arya/static/demo/wabo_fullCA-AHC-CF.om'
     #fn = './arya/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
-    fn_log = './arya/static/demo/wabo.csv'
+
+    fn = './arya/static/demo/toy_example.om'
+    #fn = './arya/static/demo/models/wabo_best.om'
+    #fn = './arya/static/demo/models/bpic17_best.om'
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
         om = OrganizationalModel.from_file_csv(f)
 
+    '''
+    fn_log = './arya/static/demo/logs/wabo.csv'
+    #fn_log = './arya/static/demo/logs/bpic17.csv'
+
+    # TODO: calculate the diagnostic measures
     from orgminer.IO.reader import read_disco_csv
     with open(fn_log, 'r') as f:
         el = read_disco_csv(f, mapping={'(case) channel': 6})
@@ -47,21 +72,23 @@ def build_dot_strings_om():
     from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
     from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
 
-    mode_miner = FullMiner(el, 
-        case_attr_name='(case) channel', resolution='weekday')
-    #mode_miner = TraceClusteringFullMiner(el,
-    #    fn_partition='input/extra_knowledge/bpic12.bosek5.tcreport', resolution='weekday')
+    #mode_miner = FullMiner(el, 
+    #    case_attr_name='(case) channel', resolution='weekday')
+    mode_miner = TraceClusteringFullMiner(el,
+        fn_partition='./arya/static/demo/extra_knowledge/wabo.bosek5.tcreport', 
+        #fn_partition='./arya/static/demo/extra_knowledge/bpic17.bosek5.tcreport', 
+        resolution='weekday')
 
     rl = mode_miner.derive_resource_log(el)
 
-    # TODO: calculate the diagnostic measures
     from orgminer.Evaluation.l2m.diagnostics import test_measure
     member_load_distribution = test_measure(rl, om) 
+    '''
 
     # construct organizational model DOT string
     graph = pgv.AGraph(strict=True, directed=True)
 
-    # TODO: debug use
+    # TODO: debug use, show only part of the model
     N_groups = 3
     N_modes = 3
     i = 0
@@ -88,8 +115,9 @@ def build_dot_strings_om():
                 group_node_id,
                 resource_node_id,
                 _class='group-resource', _type='edge',
-                contribution='{:.0%}'.format(
-                    member_load_distribution[og_id][resource]))
+                #contribution='{:.0%}'.format(
+                #    member_load_distribution[og_id][resource])
+                )
 
         # capable execution modes, and connecting edges to groups
         exec_modes = om.find_group_execution_modes(og_id)[:] # TODO
@@ -104,7 +132,7 @@ def build_dot_strings_om():
                 mode_node_id,
                 _class='group-mode', _type='edge')
 
-        i += 1 # TODO
+        #i += 1 # TODO
 
     return graph.string()
 
@@ -112,8 +140,10 @@ def build_dot_strings_om():
 #def discover_process_model(el, case_type=None, time_type=None):
 def discover_process_model(case_type=None, hl_activity_types=None):
     # TODO: hard-coded file for debugging
-    fn_log = './arya/static/demo/wabo.csv'
-    fn_log_xes = './arya/static/demo/wabo.xes'
+    fn_log = './arya/static/demo/logs/wabo.csv'
+    fn_log_xes = './arya/static/demo/logs/wabo.xes'
+    #fn_log = './arya/static/demo/logs/bpic17.csv'
+    #fn_log_xes = './arya/static/demo/logs/bpic17.xes'
 
     from pm4py.objects.log.importer.xes import factory as xes_import_factory
     log = xes_import_factory.apply(fn_log_xes)
@@ -125,10 +155,12 @@ def discover_process_model(case_type=None, hl_activity_types=None):
     from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
     from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
 
-    mode_miner = FullMiner(el, 
-        case_attr_name='(case) channel', resolution='weekday')
-    #mode_miner = TraceClusteringFullMiner(el,
-    #    fn_partition='input/extra_knowledge/bpic12.bosek5.tcreport', resolution='weekday')
+    #mode_miner = FullMiner(el, 
+    #    case_attr_name='(case) channel', resolution='weekday')
+    mode_miner = TraceClusteringFullMiner(el,
+        fn_partition='./arya/static/demo/extra_knowledge/wabo.bosek5.tcreport', 
+        #fn_partition='./arya/static/demo/extra_knowledge/bpic17.bosek5.tcreport', 
+        resolution='weekday')
 
     sel_cases = mode_miner.get_values_by_type(case_type)
     # trim the additional markings appended by Disco

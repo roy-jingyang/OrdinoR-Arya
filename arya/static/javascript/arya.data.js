@@ -581,7 +581,8 @@ class DataFactory {
             for (const attr in edge[1]) {
                 if (attr[0] != '_') {
                     if (attr == "contribution")
-                        string += "label" + '=';
+                        //string += "label" + '=';
+                        string += new String(attr) + '=';
                     else
                         string += new String(attr) + '=';
                     string += '"' + new String(edge[1][attr]) + '",';

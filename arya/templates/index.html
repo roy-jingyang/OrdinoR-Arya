@@ -8,23 +8,25 @@
 
 <body>
     <h3> Project Arya </h2>
-    <h5 style="font-style: italic"> View an organizational model </h4>
+    <h5 style="font-style: italic"> Visualize an organizational model </h4>
 
     <div id="container">
-
-    <div id="canvas_org_m">
-        <button id="download_org_m_vis" label="organizational_model" 
-            type="button"> Export SVG </button>
         Canvas for plotting an organizational model.
-    </div>
+        <div id="canvas_org_m">
+            <!-- <button id="reset_org_m_vis" label="organizational_model" 
+                type="button" class="reset_btn"> Reset view </button> -->
+            <button id="export_org_m_vis" label="organizational_model" 
+                type="button" class="export_btn"> Export SVG </button>
+        </div>
 
-    <div id="canvas_proc_m">
-        <button id="download_proc_m_vis" label="process_model"
-            type="button"> Export SVG </button>
         Canvas for plotting a process model of:
         <div id="proc_m_title"></div>
-    </div>
-
+        <div id="canvas_proc_m">
+            <!-- <button id="reset_proc_m_vis" label="process_model"
+                type="button" class="reset_btn"> Reset view </button> -->
+            <button id="export_proc_m_vis" label="process_model"
+                type="button" class="export_btn"> Export SVG </button>
+        </div>
     </div>
 </body>
 
@@ -73,7 +75,7 @@
         } else {
             console.log("Renderer invoked for process model.");
             var transition_effect = d3.transition()
-                .duration(100).ease(d3.easeLinear);
+                .duration(500).ease(d3.easeLinear);
             
             d3.select("#canvas_proc_m").graphviz().fit(true)
                 .transition(transition_effect)
@@ -89,11 +91,18 @@
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
-    /* Attach listeners for svg downloading. */
-    d3.selectAll("button").on("click", function() {
-        d3_save_svg.save(d3.select(this.parentNode).select("svg")
-            .node(), {filename: this.getAttribute("label")});
+    /* TODO: Setup for reset svg zoom. */
+    d3.selectAll(".reset_btn").on("click", function() {
+        // do nothing
     });
+
+
+    /* Setup for svg export. */
+    d3.selectAll(".export_btn").on("click", function() {
+        d3_save_svg.save(d3.select(this.parentNode).select("svg").node(), 
+            {filename: this.getAttribute("label")});
+    });
+
 
 </script>
 

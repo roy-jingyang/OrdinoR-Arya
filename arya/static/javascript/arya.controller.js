@@ -316,7 +316,7 @@ class Waiter {
                 null : self.df.getCapabilityNodeIdsByGroup(currentGroup));
             var childNodeIds = self.df.modeTree.getChildNodes(modeNodeId);
             
-            if (self.df.modeTree.getNodeLevel(modeNodeId) < 2) {
+            if (self.df.modeTree.getNodeLevel(modeNodeId) == 1) {
                 // dblclick on first level execution modes
                 var status = self.nodeStatusTracker.get("modes")
                     .get(modeNodeId).indexOf("dblclick");
@@ -354,24 +354,63 @@ class Waiter {
                 }
             } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 2) {
                 // dblclick on second level execution modes
-                var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
-                var atsHighlighted = [];
-                for (var childNodeId of childNodeIds) {
-                    if (capIds != null && capIds.includes(childNodeId)) {
-                        atsHighlighted.push(
-                            self.df.modeTree.parseModeTriple(childNodeId)[1]);
-                    }
-                }
-                
+                var status = self.nodeStatusTracker.get("modes")
+                    .get(modeNodeId).indexOf("dblclick");
+
                 renderProcMDot(null);
-                alert("Please wait for process model visualization" +
-                    " to be refreshed.");
-                var procMTitle = '(' + [ct, x, tt].join(',') + ')';
-                d3.request('./get_process_model/' 
-                    + ct + '/' + atsHighlighted.join(','))
-                    .get(function(xhr) {
-                    renderProcMDot(xhr.response, procMTitle);
-                });
+                if (status == -1) {
+                    //console.log("not clicked. Setting");
+                    self.nodeStatusTracker.get("modes")
+                        .get(modeNodeId).push("dblclick");
+
+                    // expand and show descendants
+                    var descendants = [];
+                    var newEdges = [];
+                    for (var nodeId of childNodeIds) {
+                        self.nodeStatusTracker.get("modes")
+                            .set(nodeId, []);
+                        descendants.push(
+                            self.df.createAugmentedModeNode(nodeId));
+                        newEdges.push([[modeNodeId, nodeId], {}]);
+                    }
+                    renderOrgM(
+                        self.highlightModeNodesById(
+                            nodeList.concat(descendants),
+                            capIds, (capIds != null)),
+                        edgeList.concat(newEdges)
+                    );
+
+                    // render process model with activity nodes highlighted
+                    var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+                    var atsHighlighted = [];
+                    for (var childNodeId of childNodeIds) {
+                        if (capIds != null && capIds.includes(childNodeId)) {
+                            atsHighlighted.push(
+                                self.df.modeTree.parseModeTriple(childNodeId)[1]);
+                        }
+                    }
+                    alert("Please wait for process model visualization" +
+                        " to be refreshed.");
+                    var procMTitle = '(' + [ct, x, tt].join(',') + ')';
+                    d3.request('./mine_process_model/' 
+                        + ct + '/' + atsHighlighted.join(','))
+                        .get(function(xhr) {
+                        renderProcMDot(xhr.response, procMTitle);
+                    });
+                } else {
+                    //console.log("already clicked. Reverting");
+                    self.nodeStatusTracker.get("modes")
+                        .get(modeNodeId).splice(status, 1);
+                    renderOrgM(
+                        self.df.removeNodes(nodeList, 
+                            self.df.modeTree.getChildNodes(modeNodeId, true)),
+                        self.df.removeEdges(edgeList,
+                            self.df.modeTree.getChildNodes(modeNodeId, true))
+                    );
+                }
+
+            } else { // (self.df.modeTree.getNodeLevel(modeNodeId) == 3)
+                // do nothing
             }
             
         });

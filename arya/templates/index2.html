@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title> Arya </title>
+    <link rel="stylesheet" type="text/css" href="../static/css/arya.css">
+</head>
+
+<body>
+    <h3> Project Arya </h2>
+    <h5 style="font-style: italic"> Visualize an organizational model </h4>
+
+    <div id="container">
+
+        <div id="box_instruction_input_log">
+            Click the button below to upload an event log file for analysis, 
+            acceptable file formats include:
+            <ul>
+                <li> <b> *.csv </b>, Colon-Separated Values file, exported from 
+                    <a href="https://fluxicon.com/disco/">
+                        Fluxicon Disco</a>.
+                </li>
+                <li> <b> *.xes </b>, eXtensible Event Stream file, which should 
+                    be compatible with 
+                    <a href="https://pm4py.fit.fraunhofer.de/documentation#importing">
+                        PM4PY</a>.
+                    See the documentation for more information.
+                </li>
+            </ul>
+
+            <form id="import_event_log">
+                <input type="file" name="event_log"><br>
+            </form>
+
+            <div id="box_input_log" hidden>
+                (Basic descriptive info of the input log will be shown here.)
+            </div>
+        </div>
+
+
+        <div id="box_config">
+            Configure options for discovering an organizational model:
+            <img src="../static/resources/approach.png" alt="Approach"
+                width="560" height="80">
+
+            <p> <b> Phase 1. Learn execution modes </b> </p>
+            <form id="opt_learn_execution_modes" class="config">
+                <input type="radio" name="phase1" value="ATonlyMiner">
+                    ATonly
+                <br>
+                <input type="radio" name="phase1" value="FullMiner">
+                    CT+AT+TT (case attribute)
+                <br>
+                <input type="radio" name="phase1" value="FullMiner">
+                    TBD: CT+AT+TT (trace clustering)
+                <br>
+            </form>
+
+            <div class="box_subconfig">
+            <form id="subopt_learn_execution_modes" class="subconfig"
+                hidden>
+            </form>
+
+            <form id="subopt_learn_execution_modes" class="subconfig"
+                hidden>
+                <input type="text" name="phase1_subopt">
+            </form>
+
+            <form id="subopt_learn_execution_modes" class="subconfig"
+                hidden>
+                <input type="text" name="phase1_subopt">
+            </form>
+            </div>
+
+
+            <p> <b> Phase 2. Discover resource grouping </b> </p>
+            <form id="opt_discover_resource_grouping" class="config">
+                <input type="radio" name="phase2" value="ahc">
+                    AHC
+                <br>
+                <input type="radio" name="phase2" value="moc">
+                    MOC
+                <br>
+            </form>
+
+            <div class="box_subconfig">
+            <form id="subopt_discover_resource_grouping" class="subconfig"
+                hidden>
+                <input type="text" name="phase2_subopt">
+            </form>
+
+            <form id="subopt_discover_resource_grouping" class="subconfig"
+                hidden>
+                <input type="text" name="phase2_subopt">
+            </form>
+            </div>
+
+            <p> <b> Phase 3. Assign execution modes </b> </p>
+            <form id="opt_assign_execution_modes" class="config">
+                <input type="radio" name="phase3" value="full_recall">
+                    FullRecall
+                <br>
+                <input type="radio" name="phase3" value="overall_score">
+                    OverallScore
+                <br>
+            </form>
+
+            <div class="box_subconfig">
+            <form id="subopt_assign_execution_modes" class="subconfig"
+                hidden>
+                <input type="text" name="phase3_subopt">
+            </form>
+
+            <form id="subopt_assign_execution_modes" class="subconfig"
+                hidden>
+                <input type="text" name="phase3_subopt">
+            </form>
+            </div>
+            <br>
+            <button id="submit_config" label="submit"
+                type="button"> Proceed </button>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    var btnSubmit = document.getElementById("submit_config");
+    btnSubmit.addEventListener("click", function() {
+        var form_opt_learn_execution_modes = document.getElementById(
+            "opt_learn_execution_modes");
+        alert(form_opt_learn_execution_modes.elements["phase1"].value);
+    });
+</script>
+
+</html>
+

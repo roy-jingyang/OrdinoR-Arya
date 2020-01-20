@@ -6,3 +6,7 @@
 *.un~
 *.swp
 
+# Ignore data files
+*.xes
+*.csv
+

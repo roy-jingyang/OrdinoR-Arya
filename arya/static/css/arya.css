@@ -7,9 +7,23 @@ div#container {
   width: 100%;
 }
 
+div#box_instruction_input_log {
+  width: 90%;
+  border: 2px solid black;
+  padding: 50px;
+  margin: 10px;
+}
+
+div#box_config {
+  width: 90%;
+  border: 2px solid black;
+  padding: 50px;
+  margin: 10px;
+}
+
 div#canvas_org_m {
-  width: 80%;
-  height: 40%;
+  width: 90%;
+  height: 60%;
   border: 2px solid blue;
   padding: 50px;
   margin: 10px;
@@ -21,8 +35,8 @@ div#canvas_org_m svg {
 }
 
 div#canvas_proc_m {
-  width: 80%;
-  height: 50%;
+  width: 90%;
+  height: 40%;
   border: 2px solid green;
   padding: 50px;
   margin: 10px;
@@ -34,7 +48,11 @@ div#canvas_proc_m svg {
 }
 
 div#proc_m_title {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 150%;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 120%;
+}
+
+form.config {
+  font-family: Helvetica, Arial, sans-serif;
 }
 
