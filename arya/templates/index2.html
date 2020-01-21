@@ -12,39 +12,66 @@
 
     <div id="container">
 
-        <div id="box_instruction_input_log">
-            Click the button below to upload an event log file for analysis, 
-            acceptable file formats include:
+        <div id="box-instruction-input-log">
+            Click the buttons below to upload an event log file for analysis.
+            Acceptable file formats include:
             <ul>
-                <li> <b> *.csv </b>, Colon-Separated Values file, exported from 
+                <li> <b> *.csv </b>, Colon-Separated Values file, 
+                    which is expected to be exported from 
                     <a href="https://fluxicon.com/disco/">
                         Fluxicon Disco</a>.
                 </li>
-                <li> <b> *.xes </b>, eXtensible Event Stream file, which should 
-                    be compatible with 
+                <li> <b> *.xes </b>, eXtensible Event Stream file, 
+                    which is expected to be compatible with 
                     <a href="https://pm4py.fit.fraunhofer.de/documentation#importing">
                         PM4PY</a>.
                     See the documentation for more information.
                 </li>
             </ul>
 
-            <form id="import_event_log">
-                <input type="file" name="event_log"><br>
-            </form>
 
-            <div id="box_input_log" hidden>
-                (Basic descriptive info of the input log will be shown here.)
-            </div>
+            {% if has_log %}
+                <button id="btn-clear-event-log" label="submit"
+                    type="button"> Clear & Reset </button>
+                <div id="box-info-input-log">
+                    <p>You have uploaded an event log file:
+                    <mark> <ins> {{ log_info.filename }} </ins> </mark>.
+                    Below are some of the basic information of the 
+                    uploaded event log: </p>
+                    <ul>
+                        <li> number of events: 
+                            <b> {{ log_info.num_events }} </b> 
+                        </li>
+                        <li> number of cases (by case ID):
+                            <b> {{ log_info.num_cases }} </b>
+                        </li>
+                        <li> number of activities (by activity label):
+                            <b> {{ log_info.num_activities }} </b>
+                        </li>
+                        <li> number of resources (by resource ID):
+                            <b> {{ log_info.num_resources }} </b>
+                        </li>
+                    </ul>
+                </div>
+            {% else %}
+                <form action="/upload_event_log" method="POST"
+                    enctype="multipart/form-data">
+                    <input type="file" name="file_event_log"><br>
+                    <input id="btn-import-event-log" type="submit" 
+                        value="Upload">
+                </form>
+            {% endif %}
         </div>
 
 
-        <div id="box_config">
+        <div id="box-config">
             Configure options for discovering an organizational model:
             <img src="../static/resources/approach.png" alt="Approach"
                 width="560" height="80">
 
+            <div>
             <p> <b> Phase 1. Learn execution modes </b> </p>
-            <form id="opt_learn_execution_modes" class="config">
+            <form id="opt-learn-execution-modes" class="config">
                 <input type="radio" name="phase1" value="ATonlyMiner">
                     ATonly
                 <br>
@@ -56,25 +83,27 @@
                 <br>
             </form>
 
-            <div class="box_subconfig">
-            <form id="subopt_learn_execution_modes" class="subconfig"
-                hidden>
-            </form>
+            <div class="box-subconfig">
+                <form class="subconfig toggle-content">
+                    <!-- no subconfig for ATonly -->
+                </form>
 
-            <form id="subopt_learn_execution_modes" class="subconfig"
-                hidden>
-                <input type="text" name="phase1_subopt">
-            </form>
+                <form class="subconfig toggle-content">
+                    Select the field to be used as the case-level attribute 
+                    for deciding case types:
+                    <input type="text" name="phase1-subopt">
+                </form>
 
-            <form id="subopt_learn_execution_modes" class="subconfig"
-                hidden>
-                <input type="text" name="phase1_subopt">
-            </form>
+                <form class="subconfig toggle-content">
+                    (TBD: parameter settings from the ProM plugin for TC)
+                    <input type="text" name="phase1-subopt">
+                </form>
+            </div>
             </div>
 
-
+            <div>
             <p> <b> Phase 2. Discover resource grouping </b> </p>
-            <form id="opt_discover_resource_grouping" class="config">
+            <form id="opt-discover-resource-grouping" class="config">
                 <input type="radio" name="phase2" value="ahc">
                     AHC
                 <br>
@@ -83,54 +112,105 @@
                 <br>
             </form>
 
-            <div class="box_subconfig">
-            <form id="subopt_discover_resource_grouping" class="subconfig"
-                hidden>
-                <input type="text" name="phase2_subopt">
-            </form>
+            <div class="box-subconfig">
+                <form class="subconfig toggle-content">
+                    <p> Specify the number of resource groups expected, 
+                    e.g., "3"; or, specify a range of possible numbers to 
+                    be determined in the format of e.g., "3-5". (Exclude 
+                    the quotes) </p>
+                    <input type="number" name="phase2-subopt"
+                         min="2" max={{ log_info.num_resources-1 }} step="1">
+                    <p> Specify the method for merging clusters. </p>
+                    <select name="method">
+                        <option value="single"> single </option>
+                        <option value="complete"> complete </option>
+                        <option value="complete"> ward </option>
+                    </select>
+                </form>
 
-            <form id="subopt_discover_resource_grouping" class="subconfig"
-                hidden>
-                <input type="text" name="phase2_subopt">
-            </form>
+                <form class="subconfig toggle-content">
+                    <p> Specify the number of resource groups expected, 
+                    e.g., "3"; or, specify a range of possible numbers to 
+                    be determined in the format of e.g., "3-5". (Exclude 
+                    the quotes) </p>
+                    <input type="number" name="n_groups"
+                         min="2" max={{ log_info.num_resources-1 }} step="1">
+                </form>
+            </div>
             </div>
 
+            <div>
             <p> <b> Phase 3. Assign execution modes </b> </p>
-            <form id="opt_assign_execution_modes" class="config">
-                <input type="radio" name="phase3" value="full_recall">
+            <form id="opt-assign-execution-modes" class="config">
+                <input type="radio" name="phase3" value="full-recall">
                     FullRecall
                 <br>
-                <input type="radio" name="phase3" value="overall_score">
+                <input type="radio" name="phase3" value="overall-score">
                     OverallScore
                 <br>
             </form>
 
-            <div class="box_subconfig">
-            <form id="subopt_assign_execution_modes" class="subconfig"
-                hidden>
-                <input type="text" name="phase3_subopt">
-            </form>
+            <div class="box-subconfig">
+                <form class="subconfig toggle-content">
+                    <!-- no subconfig for ATonly -->
+                </form>
 
-            <form id="subopt_assign_execution_modes" class="subconfig"
-                hidden>
-                <input type="text" name="phase3_subopt">
-            </form>
+                <form class="subconfig toggle-content">
+                    <p> Specify the weightings to be used. 
+                        (floats ranged from 0.0 to 1.0 and summed up to
+                        1.0) </p>
+                    <input type="number" name="phase3-subopt" value="0.5">
+                    <input type="number" name="phase3-subopt" value="0.5">
+                    <p> Specify the selection threshold 
+                        (float ranged from 0.0 to 1.0) </p>
+                    <input type="number" name="phase3-subopt" 
+                        min="0" max="1" step="0.1" value="0.5">
+                </form>
             </div>
+            </div>
+
             <br>
-            <button id="submit_config" label="submit"
-                type="button"> Proceed </button>
+            <button id="btn-submit-config" label="submit"
+                type="button"> Discover model </button>
         </div>
     </div>
 
 </body>
 
 <script>
-    var btnSubmit = document.getElementById("submit_config");
+    var show = function(elem) {
+        elem.classList.add("is-visible");
+    }
+    var hide = function(elem) {
+        elem.classList.remove("is-visible");
+    }
+    var toggle = function(elem) {
+        elem.classList.toggle("is-visible");
+    }
+
+    for (var formConfig of document.getElementsByClassName("config")) {
+        for (var radio of formConfig.getElementsByTagName("input")) {
+            radio.addEventListener("click", function() {
+                var index = Array.prototype.indexOf.call(
+                    this.parentNode.getElementsByTagName("input"),
+                    this);
+                var subConfigList = this.parentNode.nextElementSibling
+                    .getElementsByClassName("subconfig");
+                for (var k = 0; k < subConfigList.length; k++) {
+                    (k != index) ? 
+                        hide(subConfigList[k]) :
+                        show(subConfigList[k]);
+                }
+            });
+        }
+    }
+
+    var btnSubmit = document.getElementById("btn-submit-config");
     btnSubmit.addEventListener("click", function() {
-        var form_opt_learn_execution_modes = document.getElementById(
-            "opt_learn_execution_modes");
-        alert(form_opt_learn_execution_modes.elements["phase1"].value);
+        var formOptLearnExecutionModes = document.getElementById(
+            "opt-learn-execution-modes");
     });
+
 </script>
 
 </html>

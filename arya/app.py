@@ -1,37 +1,92 @@
 from flask import *
 app = Flask(__name__)
+# NOTE: do NOT leak the secret key of the server!
+app.secret_key = b'qut.edu.au_GP-Y606C-23'
 
 # TODO: remove the import by local relative path
+# TODO: check all path configuration
+
 import sys
 sys.path.append('../OrgMiner/')
+
+from os.path import join
 
 import pygraphviz as pgv
 
 delim = '/::/'
 
-####################### Routers ########################################
+####################### Handlers #######################################
+@app.route('/index')
+def index():
+    return render_template('index2.html',
+        has_log=False,
+        log_info=None)
+
+
+@app.route('/upload_event_log', methods=['POST'])
+def import_event_log():
+    if request.method == 'POST':
+        # if the post request does not have the file part, or
+        if 'file_event_log' not in request.files:
+            abort(400) # Bad Request
+        else:
+            fn = request.files['file_event_log'].filename 
+            # if user does not select a file,
+            # but the browser submits a null part;
+            # or if the file extension is not supported
+            if fn == '' or is_uploaded_file_allowed(fn) is False:
+                abort(400) # Bad Request
+            else:
+                from werkzeug.utils import secure_filename
+                fn = secure_filename(fn)
+                from time import time
+                session['upload_time'] = time()
+                fn_id = str(session['upload_time']).replace('.', '-')
+
+                request.files['file_event_log'].save(join(
+                    './arya/tmp/', 
+                    fn + '.' + fn_id
+                ))
+
+                # read log and fetch basic info
+                if is_uploaded_file_allowed(fn) == 'csv':
+                    from orgminer.IO.reader import read_disco_csv
+                    with open(join('./arya/tmp/', fn + '.' + fn_id)) as f:
+                        el = read_disco_csv(f)
+                elif is_uploaded_file_allowed(fn) == 'xes':
+                    pass
+                else:
+                    pass
+                    
+                log_info = {
+                    'filename': fn,
+                    #'fileid': fn_id,
+                    'num_events': len(el),
+                    'num_cases': len(set(el['case_id'])),
+                    'num_activities': len(set(el['activity'])),
+                    'num_resources': len(set(el['resource']))
+                }
+                return render_template('index2.html',
+                    has_log=True,
+                    log_info=log_info)
+
+    abort(405) # Method Not Allowed
+
+
+# Discover an organizational model with the approach as configured
+@app.route('/mine_org_model', methods=['POST'])
+def get_org_model():
+    pass
+
+
+# Show a discovered organizational model (and a process model if requested)
+#@app.route('/view')
 @app.route('/')
-def main():
+def view_results():
     # load data
     dotstr_org_model = build_dot_strings_om()
     return render_template('index.html',
         dotstr_org_model=dotstr_org_model)
-
-
-@app.route('/index')
-def config_panel():
-    return render_template('index2.html')
-
-
-@app.route('/view')
-def view_results():
-    pass
-
-
-from flask import request
-@app.route('/mine_org_model', methods=['POST'])
-def get_org_model():
-    pass
 
 
 # Discover a process model correspondingly
@@ -45,6 +100,14 @@ def get_process_model(case_type):
 def get_process_model_with_highlights(case_type, hl_activity_types):
     return discover_process_model(case_type, hl_activity_types.split(','))
 
+####################### Helpers ########################################
+def is_uploaded_file_allowed(fn_event_log):
+    ALLOWED_EXT = {'csv', 'xes'}
+    file_ext = '.' in fn_event_log and fn_event_log.rsplit('.', 1)[1].lower()
+    if file_ext in ALLOWED_EXT:
+        return file_ext
+    else:
+        return False
 
 ####################### Functions ######################################
 def build_dot_strings_om():

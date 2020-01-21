@@ -12,20 +12,20 @@
 
     <div id="container">
         Canvas for plotting an organizational model.
-        <div id="canvas_org_m">
-            <!-- <button id="reset_org_m_vis" label="organizational_model" 
-                type="button" class="reset_btn"> Reset view </button> -->
-            <button id="export_org_m_vis" label="organizational_model" 
-                type="button" class="export_btn"> Export SVG </button>
+        <div id="canvas-org-m">
+            <!-- <button id="reset-org-m-vis" label="organizational-model" 
+                type="button" class="reset-btn"> Reset view </button> -->
+            <button id="export-org-m-vis" label="organizational-model" 
+                type="button" class="export-btn"> Export SVG </button>
         </div>
 
         Canvas for plotting a process model of:
-        <div id="proc_m_title"></div>
-        <div id="canvas_proc_m">
-            <!-- <button id="reset_proc_m_vis" label="process_model"
-                type="button" class="reset_btn"> Reset view </button> -->
-            <button id="export_proc_m_vis" label="process_model"
-                type="button" class="export_btn"> Export SVG </button>
+        <div id="proc-m-title"></div>
+        <div id="canvas-proc-m">
+            <!-- <button id="reset-proc-m-vis" label="process-model"
+                type="button" class="reset-btn"> Reset view </button> -->
+            <button id="export-proc-m-vis" label="process-model"
+                type="button" class="export-btn"> Export SVG </button>
         </div>
     </div>
 </body>
@@ -56,32 +56,32 @@
         var transition_effect = d3.transition()
             .duration(500).ease(d3.easeLinear);
 
-        d3.select("#canvas_org_m").graphviz().fit(true)
+        d3.select("#canvas-org-m").graphviz().fit(true)
             .transition(transition_effect)
             .engine("dot")
             .renderDot(dotSrcString, function() {
                 waiter.attachSVGListeners(
                     [nodeList, edgeList],
-                    d3.select("#canvas_org_m").select(".graph"));
+                    d3.select("#canvas-org-m").select(".graph"));
 
-                d3.select("div#canvas_org_m > svg").on("dblclick.zoom", null);
+                d3.select("div#canvas-org-m > svg").on("dblclick.zoom", null);
             });
     }
 
     function renderProcMDot(dotSrcString, title) {
-        d3.select("div#proc_m_title").text(title);
+        d3.select("div#proc-m-title").text(title);
         if (dotSrcString == null) {
-            d3.select("#canvas_proc_m").selectAll("svg > *").remove();
+            d3.select("#canvas-proc-m").selectAll("svg > *").remove();
         } else {
             console.log("Renderer invoked for process model.");
             var transition_effect = d3.transition()
                 .duration(500).ease(d3.easeLinear);
             
-            d3.select("#canvas_proc_m").graphviz().fit(true)
+            d3.select("#canvas-proc-m").graphviz().fit(true)
                 .transition(transition_effect)
                 .engine("dot")
                 .renderDot(dotSrcString, function() {
-                    d3.select("div#canvas_proc_m > svg").on(
+                    d3.select("div#canvas-proc-m > svg").on(
                         "dblclick.zoom", null);
                 });
         }
@@ -92,13 +92,13 @@
     renderOrgM(initNodeList, initEdgeList);
 
     /* TODO: Setup for reset svg zoom. */
-    d3.selectAll(".reset_btn").on("click", function() {
+    d3.selectAll(".reset-btn").on("click", function() {
         // do nothing
     });
 
 
     /* Setup for svg export. */
-    d3.selectAll(".export_btn").on("click", function() {
+    d3.selectAll(".export-btn").on("click", function() {
         d3_save_svg.save(d3.select(this.parentNode).select("svg").node(), 
             {filename: this.getAttribute("label")});
     });

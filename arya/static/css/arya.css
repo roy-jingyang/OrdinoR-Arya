@@ -1,3 +1,12 @@
+.toggle-content {
+  display: none;
+}
+
+.toggle-content.is-visible {
+  display: block;
+}
+
+/*--------------------------------------------------------------------*/
 div#container {
   display: flex;
   flex-direction: column;
@@ -7,21 +16,26 @@ div#container {
   width: 100%;
 }
 
-div#box_instruction_input_log {
+div#box-instruction-input-log {
   width: 90%;
   border: 2px solid black;
   padding: 50px;
   margin: 10px;
 }
 
-div#box_config {
+div#box-config {
   width: 90%;
   border: 2px solid black;
   padding: 50px;
   margin: 10px;
 }
 
-div#canvas_org_m {
+div.box-subconfig{
+  border: 1px dotted black;
+}
+
+/*--------------------------------------------------------------------*/
+div#canvas-org-m {
   width: 90%;
   height: 60%;
   border: 2px solid blue;
@@ -29,12 +43,12 @@ div#canvas_org_m {
   margin: 10px;
 }
 
-div#canvas_org_m svg {
+div#canvas-org-m svg {
   width: 100%;
   height: 100%;
 }
 
-div#canvas_proc_m {
+div#canvas-proc-m {
   width: 90%;
   height: 40%;
   border: 2px solid green;
@@ -42,12 +56,12 @@ div#canvas_proc_m {
   margin: 10px;
 }
 
-div#canvas_proc_m svg {
+div#canvas-proc-m svg {
   width: 100%;
   height: 100%;
 }
 
-div#proc_m_title {
+div#proc-m-title {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 120%;
 }
