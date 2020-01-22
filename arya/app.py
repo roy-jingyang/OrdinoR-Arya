@@ -10,94 +10,111 @@ import sys
 sys.path.append('../OrgMiner/')
 
 from os.path import join
-
 import pygraphviz as pgv
 
 delim = '/::/'
 
 ####################### Handlers #######################################
-@app.route('/index')
+@app.route('/demo')
+def handler_view_demo():
+    # load data
+    dotstr_org_model = build_demo_org_model_dot_string()
+    return render_template('index.html',
+        dotstr_org_model=dotstr_org_model)
+
+
+@app.route('/', methods=['GET'])
 def index():
     return render_template('index2.html',
         has_log=False,
         log_info=None)
 
 
-@app.route('/upload_event_log', methods=['POST'])
-def import_event_log():
-    if request.method == 'POST':
-        # if the post request does not have the file part, or
-        if 'file_event_log' not in request.files:
+@app.route('/', methods=['POST'])
+def index_loaded():
+    # if the post request does not have the file part, or
+    if 'file_event_log' not in request.files:
+        abort(400) # Bad Request
+    else:
+        fn = request.files['file_event_log'].filename 
+        # if user does not select a file,
+        # but the browser submits a null part;
+        # or if the file extension is not supported
+        if fn == '' or is_uploaded_file_allowed(fn) is False:
             abort(400) # Bad Request
         else:
-            fn = request.files['file_event_log'].filename 
-            # if user does not select a file,
-            # but the browser submits a null part;
-            # or if the file extension is not supported
-            if fn == '' or is_uploaded_file_allowed(fn) is False:
-                abort(400) # Bad Request
+            from werkzeug.utils import secure_filename
+            fn = secure_filename(fn)
+            from time import time
+            if 'user_id' in session:
+                pass
             else:
-                from werkzeug.utils import secure_filename
-                fn = secure_filename(fn)
-                from time import time
-                session['upload_time'] = time()
-                fn_id = str(session['upload_time']).replace('.', '-')
+                session['user_id'] = create_user_id()
 
-                request.files['file_event_log'].save(join(
-                    './arya/tmp/', 
-                    fn + '.' + fn_id
-                ))
+            session['last_upload_time'] = time()
+            fn_server = session['user_id']
 
-                # read log and fetch basic info
-                if is_uploaded_file_allowed(fn) == 'csv':
-                    from orgminer.IO.reader import read_disco_csv
-                    with open(join('./arya/tmp/', fn + '.' + fn_id)) as f:
-                        el = read_disco_csv(f)
-                elif is_uploaded_file_allowed(fn) == 'xes':
-                    pass
-                else:
-                    pass
-                    
-                log_info = {
-                    'filename': fn,
-                    #'fileid': fn_id,
-                    'num_events': len(el),
-                    'num_cases': len(set(el['case_id'])),
-                    'num_activities': len(set(el['activity'])),
-                    'num_resources': len(set(el['resource']))
-                }
-                return render_template('index2.html',
-                    has_log=True,
-                    log_info=log_info)
+            request.files['file_event_log'].save(
+                join('./arya/tmp/', fn_server))
 
-    abort(405) # Method Not Allowed
+            # read log and fetch basic info
+            if is_uploaded_file_allowed(fn) == 'csv':
+                session['last_upload_filetype'] = 'csv'
+                from orgminer.IO.reader import read_disco_csv
+                with open(join('./arya/tmp/', fn_server)) as f:
+                    el = read_disco_csv(f)
+            elif is_uploaded_file_allowed(fn) == 'xes':
+                session['last_upload_filetype'] = 'xes'
+                # TODO: invoke PM4PY for importing
+                pass
+            else:
+                pass
+                
+            log_info = {
+                'filename': fn,
+                'num_events': len(el),
+                'num_cases': len(set(el['case_id'])),
+                'num_activities': len(set(el['activity'])),
+                'num_resources': len(set(el['resource'])),
+                'attributes': el.columns
+            }
+            return render_template('index2.html',
+                has_log=True,
+                log_info=log_info)
+
+
+@app.route('/clear_reset', methods=['GET'])
+def handler_clear_reset():
+    fn_server = session['user_id']
+    from os import remove
+    remove(join('./arya/tmp/', fn_server))
+    return redirect('/')
 
 
 # Discover an organizational model with the approach as configured
-@app.route('/mine_org_model', methods=['POST'])
-def get_org_model():
-    pass
-
-
 # Show a discovered organizational model (and a process model if requested)
-#@app.route('/view')
-@app.route('/')
-def view_results():
-    # load data
-    dotstr_org_model = build_dot_strings_om()
+@app.route('/view', methods=['POST'])
+def handler_view_results():
+    configs = eval(str(request.get_json()))
+    om = discover_org_model(
+        join('./arya/tmp/', session['user_id']),
+        session['last_upload_filetype'],
+        configs
+    )
+    dotstr = build_org_model_dot_string(om)
     return render_template('index.html',
-        dotstr_org_model=dotstr_org_model)
+        dotstr_org_model=dotstr)
 
 
 # Discover a process model correspondingly
 @app.route('/mine_process_model/<case_type>/')
-def get_process_model(case_type):
+def handler_mine_process_model(case_type):
     return discover_process_model(case_type, [])
 
 
 # Discover a process model correspondingly (with nodes highlighted)
 @app.route('/mine_process_model/<case_type>/<hl_activity_types>')
-def get_process_model_with_highlights(case_type, hl_activity_types):
+def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
     return discover_process_model(case_type, hl_activity_types.split(','))
 
 ####################### Helpers ########################################
@@ -109,59 +126,77 @@ def is_uploaded_file_allowed(fn_event_log):
     else:
         return False
 
+
+def create_user_id():
+    from random import randrange
+    return '{:x}'.format(randrange(10**32))[:64]
+
+
+def _import_block(path_invoke):
+    from importlib import import_module
+    module = import_module('.'.join(path_invoke.split('.')[:-1]))
+    foo = getattr(module, path_invoke.split('.')[-1])
+    return foo
+
 ####################### Functions ######################################
-def build_dot_strings_om():
-    # TODO: hard-coded file for debugging
-    #fn = './arya/static/demo/wabo_fullTC-MOC-CF.om' #TODO: tricky overlaps!
-
-    fn = './arya/static/demo/toy_example.om'
-    #fn = './arya/static/demo/models/wabo_best.om'
-    #fn = './arya/static/demo/models/bpic17_best.om'
-
-    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    with open(fn, 'r') as f:
-        om = OrganizationalModel.from_file_csv(f)
-
-    '''
-    fn_log = './arya/static/demo/logs/wabo.csv'
-    #fn_log = './arya/static/demo/logs/bpic17.csv'
-
-    # TODO: calculate the diagnostic measures
+def discover_org_model(path_server_event_log, filetype_server_event_log, 
+    configs):
     from orgminer.IO.reader import read_disco_csv
-    with open(fn_log, 'r') as f:
-        el = read_disco_csv(f, mapping={'(case) channel': 6})
+    # TODO: read_xes
 
-    # TODO: convert to resource log
-    from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
-    from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
-
-    #mode_miner = FullMiner(el, 
-    #    case_attr_name='(case) channel', resolution='weekday')
-    mode_miner = TraceClusteringFullMiner(el,
-        fn_partition='./arya/static/demo/extra_knowledge/wabo.bosek5.tcreport', 
-        #fn_partition='./arya/static/demo/extra_knowledge/bpic17.bosek5.tcreport', 
-        resolution='weekday')
-
-    rl = mode_miner.derive_resource_log(el)
-
-    from orgminer.Evaluation.l2m.diagnostics import test_measure
-    member_load_distribution = test_measure(rl, om) 
-    '''
-
-    # construct organizational model DOT string
-    graph = pgv.AGraph(strict=True, directed=True)
-
-    # TODO: debug use, show only part of the model
-    N_groups = 3
-    N_modes = 3
-    i = 0
-
-    for og_id, og in om.find_all_groups():
-        if i < N_groups:
+    with open(path_server_event_log, 'r') as f:
+        if filetype_server_event_log == 'csv':
+            el = read_disco_csv(f)
+        elif filetype_server_event_log == 'xes':
             pass
         else:
-            break
+            pass
 
+    # Phase 1
+    cls_exec_mode_miner = _import_block('orgminer.ExecutionModeMiner.' +
+        configs[0]['method']) 
+    params = configs[0]['params'] if len(configs[0]['params']) > 0 else None
+    if params is None:
+        exec_mode_miner = cls_exec_mode_miner(el)
+    else:
+        exec_mode_miner = cls_exec_mode_miner(el, **params)
+    rl = exec_mode_miner.derive_resource_log(el)
+
+    # Phase 2
+    from orgminer.ResourceProfiler.raw_profiler import count_execution_frequency
+    profiles = count_execution_frequency(rl)
+
+    group_discoverer = _import_block('orgminer.OrganizationalModelMiner.' +
+        configs[1]['method'])
+    params = configs[1]['params'] if len(configs[1]['params']) > 0 else None
+    if params is None:
+        ogs = group_discoverer(profiles)
+    else:
+        ogs = group_discoverer(profiles, **params)
+
+    if type(ogs) is tuple:
+        ogs = ogs[0]
+
+    # Phase 3
+    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
+    om = OrganizationalModel()
+    mode_assigner = _import_block('orgminer.OrganizationalModelMiner.' +
+        'mode_assignment.' + configs[2]['method'])
+    params = configs[2]['params'] if len(configs[2]['params']) > 0 else None
+    for og in ogs:
+        if params is None:
+            modes = mode_assigner(og, rl)
+        else:
+            modes = mode_assigner(og, rl, **params)
+        om.add_group(og, modes)
+
+    return om
+
+
+def build_org_model_dot_string(om):
+    graph = pgv.AGraph(strict=True, directed=True)
+
+    for og_id, og in om.find_all_groups():
         # groups
         group_node_id = 'group' + delim + '{}'.format(og_id)
         graph.add_node(group_node_id, 
@@ -183,7 +218,7 @@ def build_dot_strings_om():
                 )
 
         # capable execution modes, and connecting edges to groups
-        exec_modes = om.find_group_execution_modes(og_id)[:] # TODO
+        exec_modes = om.find_group_execution_modes(og_id)
         for em in exec_modes:
             ct, at, tt = em[0], em[1], em[2]
             mode_node_id = 'mode' + delim + '({},{},{})'.format(ct, at, tt)
@@ -195,9 +230,15 @@ def build_dot_strings_om():
                 mode_node_id,
                 _class='group-mode', _type='edge')
 
-        #i += 1 # TODO
-
     return graph.string()
+
+def build_demo_org_model_dot_string():
+    fn = './arya/static/demo/toy_example.om'
+    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
+    with open(fn, 'r') as f:
+        demo_om = OrganizationalModel.from_file_csv(f)
+    
+    return build_org_model_dot_string(demo_om)
 
 
 #def discover_process_model(el, case_type=None, time_type=None):

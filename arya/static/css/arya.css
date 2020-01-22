@@ -32,6 +32,8 @@ div#box-config {
 
 div.box-subconfig{
   border: 1px dotted black;
+  padding: 15px;
+  margin: 2px;
 }
 
 /*--------------------------------------------------------------------*/
