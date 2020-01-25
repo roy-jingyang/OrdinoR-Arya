@@ -19,13 +19,13 @@ delim = '/::/'
 def handler_view_demo():
     # load data
     dotstr_org_model = build_demo_org_model_dot_string()
-    return render_template('index.html',
+    return render_template('visualize.html',
         dotstr_org_model=dotstr_org_model)
 
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index2.html',
+    return render_template('index.html',
         has_log=False,
         log_info=None)
 
@@ -78,7 +78,7 @@ def index_loaded():
                 'num_resources': len(set(el['resource'])),
                 'attributes': el.columns
             }
-            return render_template('index2.html',
+            return render_template('index.html',
                 has_log=True,
                 log_info=log_info)
 
@@ -102,19 +102,23 @@ def handler_view_results():
         configs
     )
     dotstr = build_org_model_dot_string(om)
-    return render_template('index.html',
+    return render_template('visualize.html',
         dotstr_org_model=dotstr)
 
 
+# TODO
 # Discover a process model correspondingly
 @app.route('/mine_process_model/<case_type>/')
 def handler_mine_process_model(case_type):
+    abort(501)
     return discover_process_model(case_type, [])
 
 
+# TODO
 # Discover a process model correspondingly (with nodes highlighted)
 @app.route('/mine_process_model/<case_type>/<hl_activity_types>')
 def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
+    abort(501)
     return discover_process_model(case_type, hl_activity_types.split(','))
 
 ####################### Helpers ########################################
@@ -232,6 +236,7 @@ def build_org_model_dot_string(om):
 
     return graph.string()
 
+
 def build_demo_org_model_dot_string():
     fn = './arya/static/demo/toy_example.om'
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
@@ -241,12 +246,10 @@ def build_demo_org_model_dot_string():
     return build_org_model_dot_string(demo_om)
 
 
-#def discover_process_model(el, case_type=None, time_type=None):
-def discover_process_model(case_type=None, hl_activity_types=None):
+def discover_process_model(path_server_event_log, filetype_server_event_log,
+    case_type=None, hl_activity_types=None):
     # TODO: hard-coded file for debugging
-    fn_log = './arya/static/demo/logs/wabo.csv'
     fn_log_xes = './arya/static/demo/logs/wabo.xes'
-    #fn_log = './arya/static/demo/logs/bpic17.csv'
     #fn_log_xes = './arya/static/demo/logs/bpic17.xes'
 
     from pm4py.objects.log.importer.xes import factory as xes_import_factory
@@ -254,7 +257,7 @@ def discover_process_model(case_type=None, hl_activity_types=None):
 
     from orgminer.IO.reader import read_disco_csv
     with open(fn_log, 'r') as f:
-        el = read_disco_csv(f, mapping={'(case) channel': 6})
+        el = read_disco_csv(f)
 
     from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
     from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
@@ -300,6 +303,7 @@ def discover_process_model(case_type=None, hl_activity_types=None):
                 node.attr['fillcolor'] = 'gainsboro'
 
     return graph.string()
+
 
 def _trim_activity_label_tail(s, patt):
     from re import search as regex_search
