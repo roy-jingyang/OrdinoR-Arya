@@ -159,11 +159,11 @@
                         <input type="number" name="phase2-subopt"
                             param="n_groups"
                             min="2" max={{ log_info.num_resources-1 }} 
-                            step="1">
+                            step="1" required>
                     {% else %}
                         <input type="number" name="phase2-subopt"
                             param="n_groups"
-                            step="1">
+                            step="1" required>
                     {% endif %}
 
                     <p> Specify the method for merging clusters. </p>
@@ -184,11 +184,11 @@
                         <input type="number" name="phase2-subopt"
                             param="n_groups"
                             min="2" max={{ log_info.num_resources-1 }} 
-                            step="1">
+                            step="1" required>
                     {% else %}
                         <input type="number" name="phase2-subopt"
                             param="n_groups"
-                            step="1">
+                            step="1" required>
                     {% endif %}
                 </form>
             </div>
@@ -219,17 +219,17 @@
                     Weight given to Group Relative Stake:
                     <input type="number" name="phase3-subopt" 
                         param="w1"
-                        value="0.5"> 
+                        value="0.5" required> 
                     Weight given to Group Coverage:
                     <input type="number" name="phase3-subopt" 
                         param="w2"
-                        value="0.5">
+                        value="0.5" required>
                     <p> Specify the threshold value.
                         (float ranged from 0.0 to 1.0) </p>
                     <input type="number" name="phase3-subopt" 
                         param="p"
                         min="0" max="1" step="0.1" 
-                        value="0.5">
+                        value="0.5" required>
                 </form>
             </div>
             </div>
@@ -316,6 +316,10 @@
     var btnSubmit = document.getElementById("btn-submit-config");
     btnSubmit.addEventListener("click", function() {
         {% if has_log %}
+            alert("Please wait until the results are derived and" +
+                " visualized.");
+            this.disabled = true;
+
             const cfgPhase1 = fetchConfig("phase1"); 
             const cfgPhase2 = fetchConfig("phase2"); 
             const cfgPhase3 = fetchConfig("phase3"); 

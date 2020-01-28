@@ -155,11 +155,12 @@ class Waiter {
                         .get(groupNodeId).indexOf("click");
                     if (status == -1) {
                         //console.log("not clicked. Setting");
-                        self.nodeStatusTracker.set("focus", groupNodeId);
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).push("click");
                         var newEdges = [];
                         for (var nodeId of memberIds) {
+                            self.nodeStatusTracker.get("resources")
+                                .get(nodeId).push(groupNodeId);
                             newEdges.push([
                                 [nodeId, groupNodeId], 
                                 Object.assign(
@@ -175,14 +176,23 @@ class Waiter {
                         );
                     } else {
                         //console.log("already clicked. Reverting");
-                        self.nodeStatusTracker.set("focus", null);
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).splice(status, 1);
+                        for (var nodeId of memberIds) {
+                            self.nodeStatusTracker.get("resources")
+                                .get(nodeId).splice(groupNodeId, 1);
+                        }
+
+                        var nonOverlapMemberIds = Array.from(
+                            self.nodeStatusTracker.get("resources").keys())
+                            .filter(resId => 
+                                self.nodeStatusTracker.get("resources")
+                                .get(resId).length == 0);
+
 
                         renderOrgM(
-                            self.df.removeNodes(nodeList, memberIds),
-                            // TODO: how to deal with overlapped groups?
-                            self.df.removeEdges(edgeList, memberIds)
+                            self.df.removeNodes(nodeList, nonOverlapMemberIds),
+                            self.df.removeEdges(edgeList, nonOverlapMemberIds)
                         );
                     }
                 }

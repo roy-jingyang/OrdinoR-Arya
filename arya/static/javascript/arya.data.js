@@ -314,7 +314,6 @@ class DataFactory {
     hasEdge(nodeUId, nodeVId) {
         if (nodeUId.indexOf("group") == 0) {
             if (nodeVId.indexOf("group") == 0) {
-                // TODO: connections among groups
                 return false;
             }
             else if (nodeVId.indexOf("resource") == 0) {
@@ -341,7 +340,6 @@ class DataFactory {
         if (this.hasEdge(nodeUId, nodeVId)) {
             if (nodeUId.indexOf("group") == 0) {
                 if (nodeVId.indexOf("group") == 0) {
-                    // TODO: connections among groups
                     return undefined;
                 }
                 else if (nodeVId.indexOf("resource") == 0) {
@@ -415,17 +413,17 @@ class DataFactory {
             if (Array.isArray(nodeVId) && Array.isArray(nodeUId)) {
                 throw new Error("Cannot determine edges with two parameters" +
                     " being lists at the same time.");
-            } else if (Array.isArray(nodeVId)) {
+            } else if (Array.isArray(nodeUId)) {
                 return edgeList.filter(function(value, index, array) {
                     var isEdgeInvolved = false;
-                    for (var nodeId of nodeVId) {
+                    for (var nodeId of nodeUId) {
                         isEdgeInvolved = (
                             value[0].sort().join(" -- ") == 
                             [nodeUId, nodeId].sort().join(" -- "));
                     }
                     return !isEdgeInvolved;
                 });
-            } else if (Array.isArray(nodeUId)) {
+            } else if (Array.isArray(nodeVId)) {
                 return removeEdges(edgeList, nodeVId, nodeUId);
             } else {
                 return edgeList.filter(function(value, index, array) {

@@ -187,12 +187,10 @@ def discover_org_model(path_server_event_log, filetype_server_event_log,
     mode_assigner = _import_block('orgminer.OrganizationalModelMiner.' +
         'mode_assignment.' + configs[2]['method'])
     params = configs[2]['params'] if len(configs[2]['params']) > 0 else None
-    for og in ogs:
-        if params is None:
-            modes = mode_assigner(og, rl)
-        else:
-            modes = mode_assigner(og, rl, **params)
-        om.add_group(og, modes)
+    if params is None:
+        om = mode_assigner(ogs, rl)
+    else:
+        om = mode_assigner(ogs, rl, **params)
 
     return om
 
@@ -238,7 +236,8 @@ def build_org_model_dot_string(om):
 
 
 def build_demo_org_model_dot_string():
-    fn = './arya/static/demo/toy_example.om'
+    #fn = './arya/static/demo/toy_example.om'
+    fn = './arya/static/demo/toy_example_overlapped.om'
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
         demo_om = OrganizationalModel.from_file_csv(f)
