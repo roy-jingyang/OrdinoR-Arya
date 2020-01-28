@@ -10,3 +10,6 @@
 *.xes
 *.csv
 
+# Ignore tmp files
+tmp/*
+

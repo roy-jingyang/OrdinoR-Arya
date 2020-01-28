@@ -236,8 +236,8 @@ def build_org_model_dot_string(om):
 
 
 def build_demo_org_model_dot_string():
-    #fn = './arya/static/demo/toy_example.om'
-    fn = './arya/static/demo/toy_example_overlapped.om'
+    fn = './arya/static/demo/toy_example.om'
+    #fn = './arya/static/demo/toy_example_overlapped.om'
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
         demo_om = OrganizationalModel.from_file_csv(f)
