@@ -58,17 +58,17 @@ def index_loaded():
                 join('./arya/tmp/', fn_server))
 
             # read log and fetch basic info
-            if is_uploaded_file_allowed(fn) == 'csv':
-                session['last_upload_filetype'] = 'csv'
-                from orgminer.IO.reader import read_disco_csv
-                with open(join('./arya/tmp/', fn_server)) as f:
+            with open(join('./arya/tmp/', fn_server)) as f:
+                if is_uploaded_file_allowed(fn) == 'csv':
+                    session['last_upload_filetype'] = 'csv'
+                    from orgminer.IO.reader import read_disco_csv
                     el = read_disco_csv(f)
-            elif is_uploaded_file_allowed(fn) == 'xes':
-                session['last_upload_filetype'] = 'xes'
-                # TODO: invoke PM4PY for importing
-                pass
-            else:
-                pass
+                elif is_uploaded_file_allowed(fn) == 'xes':
+                    session['last_upload_filetype'] = 'xes'
+                    from orgminer.IO.reader import read_xes
+                    el = read_xes(f)
+                else:
+                    pass
                 
             log_info = {
                 'filename': fn,
@@ -106,20 +106,24 @@ def handler_view_results():
         dotstr_org_model=dotstr)
 
 
-# TODO
 # Discover a process model correspondingly
 @app.route('/mine_process_model/<case_type>/')
 def handler_mine_process_model(case_type):
-    abort(501)
-    return discover_process_model(case_type, [])
+    case_type = None if case_type == 'None' else case_type
+    return discover_process_model(
+        join('./arya/tmp/', session['user_id']),
+        session['last_upload_filetype'],
+        case_type, [])
 
 
-# TODO
 # Discover a process model correspondingly (with nodes highlighted)
 @app.route('/mine_process_model/<case_type>/<hl_activity_types>')
 def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
-    abort(501)
-    return discover_process_model(case_type, hl_activity_types.split(','))
+    case_type = None if case_type == 'None' else case_type
+    return discover_process_model(
+        join('./arya/tmp/', session['user_id']),
+        session['last_upload_filetype'],
+        case_type, hl_activity_types.split(','))
 
 ####################### Helpers ########################################
 def is_uploaded_file_allowed(fn_event_log):
@@ -145,14 +149,13 @@ def _import_block(path_invoke):
 ####################### Functions ######################################
 def discover_org_model(path_server_event_log, filetype_server_event_log, 
     configs):
-    from orgminer.IO.reader import read_disco_csv
-    # TODO: read_xes
-
     with open(path_server_event_log, 'r') as f:
         if filetype_server_event_log == 'csv':
+            from orgminer.IO.reader import read_disco_csv
             el = read_disco_csv(f)
         elif filetype_server_event_log == 'xes':
-            pass
+            from orgminer.IO.reader import read_xes
+            el = read_xes(f)
         else:
             pass
 
@@ -165,6 +168,8 @@ def discover_org_model(path_server_event_log, filetype_server_event_log,
     else:
         exec_mode_miner = cls_exec_mode_miner(el, **params)
     rl = exec_mode_miner.derive_resource_log(el)
+    with open(path_server_event_log + '.mode_miner', 'w') as f:
+        exec_mode_miner.to_file(f)
 
     # Phase 2
     from orgminer.ResourceProfiler.raw_profiler import count_execution_frequency
@@ -247,43 +252,44 @@ def build_demo_org_model_dot_string():
 
 def discover_process_model(path_server_event_log, filetype_server_event_log,
     case_type=None, hl_activity_types=None):
-    # TODO: hard-coded file for debugging
-    fn_log_xes = './arya/static/demo/logs/wabo.xes'
-    #fn_log_xes = './arya/static/demo/logs/bpic17.xes'
+    with open(path_server_event_log, 'r') as f:
+        if filetype_server_event_log == 'csv':
+            # TODO: handle process model discovery for CSV inputs
+            return None
+        elif filetype_server_event_log == 'xes':
+            from orgminer.IO.reader import read_xes
+            el = read_xes(f)
+            from pm4py.objects.log.importer.xes import factory
+            pm4py_log = factory.apply(path_server_event_log)
+        else:
+            pass
 
-    from pm4py.objects.log.importer.xes import factory as xes_import_factory
-    log = xes_import_factory.apply(fn_log_xes)
+    from orgminer.ExecutionModeMiner.base import BaseMiner
+    with open(path_server_event_log + '.mode_miner', 'r') as f:
+        mode_miner = BaseMiner.from_file(f) 
 
-    from orgminer.IO.reader import read_disco_csv
-    with open(fn_log, 'r') as f:
-        el = read_disco_csv(f)
-
-    from orgminer.ExecutionModeMiner.direct_groupby import FullMiner
-    from orgminer.ExecutionModeMiner.informed_groupby import TraceClusteringFullMiner
-
-    #mode_miner = FullMiner(el, 
-    #    case_attr_name='(case) channel', resolution='weekday')
-    mode_miner = TraceClusteringFullMiner(el,
-        fn_partition='./arya/static/demo/extra_knowledge/wabo.bosek5.tcreport', 
-        #fn_partition='./arya/static/demo/extra_knowledge/bpic17.bosek5.tcreport', 
-        resolution='weekday')
-
-    sel_cases = mode_miner.get_values_by_type(case_type)
-    # trim the additional markings appended by Disco
+    print(type(mode_miner))
+    sel_cases = mode_miner.get_values_by_type(case_type) \
+        if case_type is not None else set(el['case_id'])
+    # NOTE: CSV only - trim the additional markings appended by Disco
+    '''
     sel_activity_types = [_trim_activity_label_tail(x, r'-complete')
         for x in hl_activity_types]
+    '''
+    sel_activity_types = hl_activity_types
 
     # filter event log
     from pm4py.objects.log.log import EventLog, Trace
-    filtered_log = EventLog()
-    for trace in log:
+    pm4py_log_filtered = EventLog()
+    for trace in pm4py_log:
         if trace.attributes['concept:name'] in sel_cases:
-            filtered_log.append(trace)
+            pm4py_log_filtered.append(trace)
 
     from pm4py.algo.discovery.dfg import factory as dfg_miner
-    dfg = dfg_miner.apply(filtered_log)
+    dfg = dfg_miner.apply(pm4py_log_filtered)
     from pm4py.visualization.dfg import factory as dfg_vis_factory
-    gviz = dfg_vis_factory.apply(dfg, log=filtered_log, variant="frequency")
+    gviz = dfg_vis_factory.apply(dfg, log=pm4py_log_filtered, 
+        variant="frequency")
 
     import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)

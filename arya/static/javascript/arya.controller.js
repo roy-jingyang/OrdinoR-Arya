@@ -392,6 +392,8 @@ class Waiter {
 
                     // render process model with activity nodes highlighted
                     var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+
+                    ct = ct == '' ? 'None' : ct;
                     var atsHighlighted = [];
                     for (var childNodeId of childNodeIds) {
                         if (capIds != null && capIds.includes(childNodeId)) {
@@ -399,8 +401,10 @@ class Waiter {
                                 self.df.modeTree.parseModeTriple(childNodeId)[1]);
                         }
                     }
+
                     alert("Please wait for process model visualization" +
                         " to be refreshed.");
+                    
                     var procMTitle = '(' + [ct, x, tt].join(',') + ')';
                     d3.request('./mine_process_model/' 
                         + ct + '/' + atsHighlighted.join(','))

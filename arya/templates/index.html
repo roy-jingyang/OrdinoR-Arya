@@ -16,19 +16,20 @@
             Click the buttons below to upload an event log file for analysis.
             Current acceptable file formats include:
             <ul>
+                <!--
                 <li> <b> *.csv </b>, Colon-Separated Values file, 
                     which is expected to be exported from 
                     <a href="https://fluxicon.com/disco/">
                         Fluxicon Disco</a>.
+                -->
+
                 </li>
-                <!--
                 <li> <b> *.xes </b>, eXtensible Event Stream file, 
                     which is expected to be compatible with 
                     <a href="https://pm4py.fit.fraunhofer.de/documentation#importing">
                         PM4PY</a>.
                     See the documentation for more information.
                 </li>
-                -->
             </ul>
 
 
@@ -152,9 +153,11 @@
             <div class="box-subconfig toggle-content">
                 <form class="subconfig toggle-content">
                     <p> Specify the number of resource groups expected, 
-                    e.g., "3"; or, specify a range of possible numbers to 
+                    e.g., "3" </p>
+                    <!--; or, specify a range of possible numbers to 
                     be determined in the format of e.g., "3-5". (Exclude 
                     the quotes) </p>
+                    -->
                     {% if has_log %}
                         <input type="number" name="phase2-subopt"
                             param="n_groups"
@@ -177,9 +180,11 @@
 
                 <form class="subconfig toggle-content">
                     <p> Specify the number of resource groups expected, 
-                    e.g., "3"; or, specify a range of possible numbers to 
+                    e.g., "3" </p>
+                    <!--; or, specify a range of possible numbers to 
                     be determined in the format of e.g., "3-5". (Exclude 
                     the quotes) </p>
+                    -->
                     {% if has_log %}
                         <input type="number" name="phase2-subopt"
                             param="n_groups"

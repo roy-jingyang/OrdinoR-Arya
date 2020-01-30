@@ -51,7 +51,7 @@
 
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
-        console.log("Renderer invoked for source:\n" + dotSrcString);
+        //console.log("Renderer invoked for source:\n" + dotSrcString);
 
         var transition_effect = d3.transition()
             .duration(500).ease(d3.easeLinear);
