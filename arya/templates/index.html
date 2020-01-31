@@ -121,6 +121,7 @@
                         <option value="month"> month </option>
                     </select>
 
+                    <!--
                     <p> Specify the format for the timestamp field, if not 
                     identical with the following default format (see 
                     <a href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes">
@@ -128,12 +129,15 @@
                     <input type="text" name="phase1-subopt"
                         param="datetime_format"
                         value="%Y/%m/%d %H:%M:%S.%f">
+                    -->
                 </form>
 
+                <!--
                 <form class="subconfig toggle-content">
                     (TBD: parameter settings from the ProM plugin for TC)
                     <input type="text" name="phase1-subopt">
                 </form>
+                -->
             </div>
             </div>
 
@@ -153,7 +157,7 @@
             <div class="box-subconfig toggle-content">
                 <form class="subconfig toggle-content">
                     <p> Specify the number of resource groups expected, 
-                    e.g., "3" </p>
+                    e.g., "3" (excluding quotes) </p>
                     <!--; or, specify a range of possible numbers to 
                     be determined in the format of e.g., "3-5". (Exclude 
                     the quotes) </p>
@@ -170,7 +174,7 @@
                     {% endif %}
 
                     <p> Specify the method for merging clusters. </p>
-                    <select name="phase2-subpot"
+                    <select type="text" name="phase2-subopt"
                         param="method">
                         <option value="single"> single </option>
                         <option value="complete"> complete </option>
@@ -180,7 +184,7 @@
 
                 <form class="subconfig toggle-content">
                     <p> Specify the number of resource groups expected, 
-                    e.g., "3" </p>
+                    e.g., "3" (excluding quotes) </p>
                     <!--; or, specify a range of possible numbers to 
                     be determined in the format of e.g., "3-5". (Exclude 
                     the quotes) </p>
@@ -195,6 +199,12 @@
                             param="n_groups"
                             step="1" required>
                     {% endif %}
+
+                    <p> Specify the method for parameter initialization. </p>
+                    <select type="text" name="phase2-subopt"
+                        param="init">
+                        <option value="kmeans"> KMeans </option>
+                    </select>
                 </form>
             </div>
             </div>
@@ -306,7 +316,7 @@
                     break;
                 case "select":
                     var value = paramElem.options[paramElem.selectedIndex]
-                        .text;
+                        .value;
                     break;
                 default:
                     // do nothing (should not fall into here)

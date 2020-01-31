@@ -367,8 +367,9 @@ class Waiter {
                 var status = self.nodeStatusTracker.get("modes")
                     .get(modeNodeId).indexOf("dblclick");
 
-                renderProcMDot(null);
                 if (status == -1) {
+                    renderProcMDot(null);
+
                     //console.log("not clicked. Setting");
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).push("dblclick");
