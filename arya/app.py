@@ -289,7 +289,9 @@ def discover_process_model(path_server_event_log, filetype_server_event_log,
     dfg = dfg_miner.apply(pm4py_log_filtered)
     from pm4py.visualization.dfg import factory as dfg_vis_factory
     gviz = dfg_vis_factory.apply(dfg, log=pm4py_log_filtered, 
-        variant="frequency")
+        variant="frequency", 
+        parameters={'maxNoOfEdgesInDiagram': 30}
+    )
 
     import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)
