@@ -7,7 +7,6 @@ app.secret_key = b'qut.edu.au_GP-Y606C-23'
 # TODO: check all path configuration
 
 import sys
-sys.path.append('../OrgMiner/')
 
 from os.path import join
 import pygraphviz as pgv
