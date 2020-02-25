@@ -143,7 +143,7 @@ class ModeTree {
 // singleton class
 class DataFactory {
     constructor(dotSrcString) {
-        // check existence
+        // singleton: check existence
         if (!!DataFactory.instance)
             return DataFactory.instance;
         DataFactory.instance = this;
@@ -168,13 +168,18 @@ class DataFactory {
         var modeNodeIdList = [];
         //var strHead = lines[0];
         for (var i = 1; i < lines.length; i++) {
-            const [idStr, attrsStr] = lines[i].split('\t ');
+            /*
+            var [idStrPart, attrsStrPart] = lines[i].split('"\t[');
+            const idStr = idStrPart + '"';
+            const attrsStr = '[' + attrsStrPart;
+            */
+            const idStr = lines[i].split('\t')[0];
             var id = cleanChar(idStr);
             var elem = Object();
 
-            //console.log(idStr);
             //elem["id"] = cleanChar(idStr);
             
+            const attrsStr = lines[i].replace(idStr + '\t', '');
             var match = /\[*\]/g.exec(attrsStr);
             if (match)
                 var attrList = attrsStr.slice(1, match.index);
