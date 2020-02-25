@@ -168,18 +168,11 @@ class DataFactory {
         var modeNodeIdList = [];
         //var strHead = lines[0];
         for (var i = 1; i < lines.length; i++) {
-            /*
-            var [idStrPart, attrsStrPart] = lines[i].split('"\t[');
-            const idStr = idStrPart + '"';
-            const attrsStr = '[' + attrsStrPart;
-            */
             const idStr = lines[i].split('\t')[0];
             var id = cleanChar(idStr);
             var elem = Object();
-
-            //elem["id"] = cleanChar(idStr);
             
-            const attrsStr = lines[i].replace(idStr + '\t', '');
+            const attrsStr = lines[i].replace(idStr + '\t', '').trim();
             var match = /\[*\]/g.exec(attrsStr);
             if (match)
                 var attrList = attrsStr.slice(1, match.index);
