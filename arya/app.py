@@ -1,10 +1,6 @@
 from flask import *
 app = Flask(__name__)
-# NOTE: do NOT leak the secret key of the server!
-app.secret_key = b'qut.edu.au_GP-Y606C-23'
-
-# TODO: remove the import by local relative path
-# TODO: check all path configuration
+app.secret_key = b'password'
 
 import sys
 
@@ -54,10 +50,10 @@ def index_loaded():
             fn_server = session['user_id']
 
             request.files['file_event_log'].save(
-                join('./arya/tmp/', fn_server))
+                join('./arya/', fn_server))
 
             # read log and fetch basic info
-            with open(join('./arya/tmp/', fn_server)) as f:
+            with open(join('./arya/', fn_server)) as f:
                 if is_uploaded_file_allowed(fn) == 'csv':
                     session['last_upload_filetype'] = 'csv'
                     from orgminer.IO.reader import read_disco_csv
@@ -86,7 +82,7 @@ def index_loaded():
 def handler_clear_reset():
     fn_server = session['user_id']
     from os import remove
-    remove(join('./arya/tmp/', fn_server))
+    remove(join('./arya/', fn_server))
     return redirect('/')
 
 
@@ -96,7 +92,7 @@ def handler_clear_reset():
 def handler_view_results():
     configs = eval(str(request.get_json()))
     om = discover_org_model(
-        join('./arya/tmp/', session['user_id']),
+        join('./arya/', session['user_id']),
         session['last_upload_filetype'],
         configs
     )
@@ -110,7 +106,7 @@ def handler_view_results():
 def handler_mine_process_model(case_type):
     case_type = None if case_type == 'None' else case_type
     return discover_process_model(
-        join('./arya/tmp/', session['user_id']),
+        join('./arya/', session['user_id']),
         session['last_upload_filetype'],
         case_type, [])
 
@@ -120,7 +116,7 @@ def handler_mine_process_model(case_type):
 def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
     case_type = None if case_type == 'None' else case_type
     return discover_process_model(
-        join('./arya/tmp/', session['user_id']),
+        join('./arya/', session['user_id']),
         session['last_upload_filetype'],
         case_type, hl_activity_types.split(','))
 
