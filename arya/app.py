@@ -263,7 +263,6 @@ def discover_process_model(path_server_event_log, filetype_server_event_log,
     with open(path_server_event_log + '.mode_miner', 'r') as f:
         mode_miner = BaseMiner.from_file(f) 
 
-    print(type(mode_miner))
     sel_cases = mode_miner.get_values_by_type(case_type) \
         if case_type is not None else set(el['case_id'])
     # NOTE: CSV only - trim the additional markings appended by Disco
@@ -287,10 +286,13 @@ def discover_process_model(path_server_event_log, filetype_server_event_log,
         variant="frequency", 
         parameters={'maxNoOfEdgesInDiagram': 30}
     )
+    print(gviz.source)
+    print('=' * 80)
 
     import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)
-    for node in graph.nodes_iter():
+    print(graph)
+    for node in graph.nodes():
         if node.attr['shape'] == 'box' and node.attr['label'] != '':
             # trim the count in the labels from DFG
             node.attr['label'] = _trim_activity_label_tail(
