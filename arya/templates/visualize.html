@@ -42,11 +42,11 @@
 <script>
 
     // retrieve organizational model data
-    var dotData = {{ dotstr_org_model|tojson }};
+    var orgModelData = {{ data_org_model|tojson }};
 
     const delim = '/::/'; // NOTE: must define for data exchange
 
-    var df = new DataFactory(dotData);
+    var df = new DataFactory(orgModelData);
     var waiter = new Waiter(df);
 
     function renderOrgM(nodeList, edgeList) {

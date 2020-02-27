@@ -142,7 +142,7 @@ class ModeTree {
 // class for handling all data elements
 // singleton class
 class DataFactory {
-    constructor(dotSrcString) {
+    constructor(dataString) {
         // singleton: check existence
         if (!!DataFactory.instance)
             return DataFactory.instance;
@@ -155,36 +155,12 @@ class DataFactory {
         this.edgeListGroupsResources = new Map();
         this.edgeListGroupsModes = new Map();
 
-
-        // parse the dot source string
-        var attrList_patt = /\[*\]/i;
-        var cleanChar = function(str) {
-            var newStr = str.replace(/"/g, '');
-            newStr = newStr.replace(/\n/g, '');
-            return newStr;
-        }
-
-        var lines = dotSrcString.split(";\n\t");
         var modeNodeIdList = [];
-        //var strHead = lines[0];
-        for (var i = 1; i < lines.length; i++) {
-            const idStr = lines[i].split('\t')[0];
-            var id = cleanChar(idStr);
+        for (const [id, attrs] of Object.entries(JSON.parse(dataString))) {
             var elem = Object();
-            
-            const attrsStr = lines[i].replace(idStr + '\t', '').trim();
-            var match = /\[*\]/g.exec(attrsStr);
-            if (match)
-                var attrList = attrsStr.slice(1, match.index);
-            else
-                throw "Invalid data";
-
-            for (var key_val of attrList.split(',\n\t\t')) {
-                //console.log(key_val.split('='));
-                const [key, val] = key_val.split('=');
-                elem[key] = cleanChar(val);
+            for (const [attrName, attrValue] of Object.entries(attrs)) {
+                elem[attrName] = attrValue;
             }
-            //console.log(elem);
 
             if (elem["_type"] == "node" && elem["_class"] == "group") {
                 this.nodeListGroups.set(id, elem);
@@ -194,7 +170,6 @@ class DataFactory {
             }
             else if (elem["_type"] == "node" && elem["_class"] == "mode") {
                 this.nodeListModes.set(id, elem);
-
                 modeNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
@@ -224,7 +199,6 @@ class DataFactory {
             else {
                 throw "Invalid data";
             }
-
         }
 
         // build the execution mode tree

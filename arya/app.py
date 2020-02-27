@@ -1,6 +1,8 @@
 from flask import *
+from flask_cors import CORS
 app = Flask(__name__)
 app.secret_key = b'password'
+CORS(app)
 
 import sys
 
@@ -13,9 +15,9 @@ delim = '/::/'
 @app.route('/demo')
 def handler_view_demo():
     # load data
-    dotstr_org_model = build_demo_org_model_dot_string()
+    data_org_model = build_demo_org_model_data()
     return render_template('visualize.html',
-        dotstr_org_model=dotstr_org_model)
+        data_org_model=data_org_model)
 
 
 @app.route('/', methods=['GET'])
@@ -96,9 +98,9 @@ def handler_view_results():
         session['last_upload_filetype'],
         configs
     )
-    dotstr = build_org_model_dot_string(om)
+    data_org_model = build_org_model_data(om)
     return render_template('visualize.html',
-        dotstr_org_model=dotstr)
+        data_org_model=data_org_model)
 
 
 # Discover a process model correspondingly
@@ -195,54 +197,58 @@ def discover_org_model(path_server_event_log, filetype_server_event_log,
     return om
 
 
-def build_org_model_dot_string(om):
-    graph = pgv.AGraph(strict=True, directed=True)
-
+def build_org_model_data(om):
+    data_dict = dict()
     for og_id, og in om.find_all_groups():
         # groups
         group_node_id = 'group' + delim + '{}'.format(og_id)
-        graph.add_node(group_node_id, 
-            label='Group {}'.format(og_id),
-            _class='group', _type='node')
+        data_dict[group_node_id] = {
+            '_type': 'node',
+            'label': 'Group {}'.format(og_id),
+            '_class': 'group'
+        }
 
         # member resources, and connecting edges to groups
         for resource in og:
             resource_node_id = 'resource' + delim + '{}'.format(resource)
-            graph.add_node(resource_node_id,
-                label='{}'.format(resource),
-                _class='resource', _type='node')
-            graph.add_edge(
-                group_node_id,
-                resource_node_id,
-                _class='group-resource', _type='edge',
-                #contribution='{:.0%}'.format(
-                #    member_load_distribution[og_id][resource])
-                )
+            data_dict[resource_node_id] = {
+                '_type': 'node',
+                'label': '{}'.format(resource),
+                '_class': 'resource'
+            }
+            data_dict[group_node_id + ' -> ' + resource_node_id] = {
+                '_type': 'edge',
+                'source': group_node_id,
+                'target': resource_node_id,
+                '_class': 'group-resource'
+            }
 
         # capable execution modes, and connecting edges to groups
         exec_modes = om.find_group_execution_modes(og_id)
         for em in exec_modes:
             ct, at, tt = em[0], em[1], em[2]
             mode_node_id = 'mode' + delim + '({},{},{})'.format(ct, at, tt)
-            graph.add_node(mode_node_id,
-                label='{}, {}, {}'.format(em[0], em[1], em[2]),
-                _class='mode', _type='node')
-            graph.add_edge(
-                group_node_id,
-                mode_node_id,
-                _class='group-mode', _type='edge')
+            data_dict[mode_node_id] = {
+                '_type': 'node',
+                'label': '{}, {}, {}'.format(em[0], em[1], em[2]),
+                '_class': 'mode'
+            }
+            data_dict[group_node_id + ' -> ' + mode_node_id] = {
+                '_type': 'edge',
+                '_class': 'group-mode'
+            }
 
-    return graph.string()
+    import json
+    return json.dumps(data_dict)
 
-
-def build_demo_org_model_dot_string():
+def build_demo_org_model_data():
     fn = './arya/static/demo/toy_example.om'
     #fn = './arya/static/demo/toy_example_overlapped.om'
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fn, 'r') as f:
         demo_om = OrganizationalModel.from_file_csv(f)
     
-    return build_org_model_dot_string(demo_om)
+    return build_org_model_data(demo_om)
 
 
 def discover_process_model(path_server_event_log, filetype_server_event_log,
@@ -289,7 +295,6 @@ def discover_process_model(path_server_event_log, filetype_server_event_log,
     print(gviz.source)
     print('=' * 80)
 
-    import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)
     print(graph)
     for node in graph.nodes():
