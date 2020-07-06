@@ -1,0 +1,36 @@
+from flask import Flask
+from flask_bootstrap import Bootstrap
+from flask_cors import CORS
+
+app = Flask(__name__)
+
+#create a function that creates a web application
+# a web server will run this web application
+def create_app():
+    app.debug = True
+    app.secret_key =' orgminer-arya'
+
+    CORS(app)
+    bootstrap = Bootstrap(app)
+
+    app.config['UPLOAD_FOLDER'] = '.tmp/'
+    
+    # register blueprints of routes
+    from . import index, main
+    app.register_blueprint(index.bp)
+    app.register_blueprint(main.bp)
+   
+    return app
+
+# HTTP error page
+from flask import render_template
+
+@app.errorhandler(404) 
+# inbuilt function which takes error as parameter 
+def not_found(e): 
+  return render_template("404.html")
+
+@app.errorhandler(500)
+def internal_error(e):
+  return render_template("500.html")
+

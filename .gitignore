@@ -11,5 +11,5 @@
 *.csv
 
 # Ignore tmp files
-tmp/*
+.tmp/*
 

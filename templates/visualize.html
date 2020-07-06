@@ -1,43 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <title> Arya </title>
-    <link rel="stylesheet" type="text/css" href="../static/css/arya.css">
-</head>
-
-<body>
-    <h3> Project Arya </h2>
-    <h5 style="font-style: italic"> Visualize an organizational model </h4>
-
-    <div id="container">
-        Canvas for plotting an organizational model.
-        <div id="canvas-org-m">
-            <!-- <button id="reset-org-m-vis" label="organizational-model" 
-                type="button" class="reset-btn"> Reset view </button> -->
-            <button id="export-org-m-vis" label="organizational-model" 
-                type="button" class="export-btn"> Export SVG </button>
-        </div>
-
-        Canvas for plotting a process model of:
-        <div id="proc-m-title"></div>
-        <div id="canvas-proc-m">
-            <!-- <button id="reset-proc-m-vis" label="process-model"
-                type="button" class="reset-btn"> Reset view </button> -->
-            <button id="export-proc-m-vis" label="process-model"
-                type="button" class="export-btn"> Export SVG </button>
-        </div>
+{% extends 'base.html' %}
+{% block main %}
+<div id="container">
+    Canvas for plotting an organizational model.
+    <div id="canvas-org-m">
+        <!-- <button id="reset-org-m-vis" label="organizational-model" 
+            type="button" class="reset-btn"> Reset view </button> -->
+        <button id="export-org-m-vis" label="organizational-model" 
+            type="button" class="export-btn"> Export SVG </button>
     </div>
-</body>
 
-<script src="../static/javascript/d3.v4.min.js"></script>
-<script src="../static/javascript/viz.js"></script>
-<script src="../static/javascript/d3-graphviz.js"></script>
-<script src="../static/javascript/jquery-3.4.1.min.js"></script>
-<script src="../static/javascript/d3-save-svg.min.js"></script>
+    Canvas for plotting a process model of:
+    <div id="proc-m-title"></div>
+    <div id="canvas-proc-m">
+        <!-- <button id="reset-proc-m-vis" label="process-model"
+            type="button" class="reset-btn"> Reset view </button> -->
+        <button id="export-proc-m-vis" label="process-model"
+            type="button" class="export-btn"> Export SVG </button>
+    </div>
+</div>
+{% endblock %}
 
-<script src="../static/javascript/arya.data.js"></script>
-<script src="../static/javascript/arya.controller.js"></script>
+{% block javascript %}
+<script src="{{url_for('static', filename='js/d3.v4.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/viz.js')}}"></script>
+<script src="{{url_for('static', filename='js/d3-graphviz.js')}}"></script>
+<script src="{{url_for('static', filename='js/d3-save-svg.min.js')}}"></script>
+
+<script src="{{url_for('static', filename='js/arya-data.js')}}"></script>
+<script src="{{url_for('static', filename='js/arya-controller.js')}}"></script>
 
 <script>
 
@@ -105,6 +95,4 @@
 
 
 </script>
-
-</html>
-
+{% endblock %}

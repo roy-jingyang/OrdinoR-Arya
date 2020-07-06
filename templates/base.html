@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>OrgMiner - Arya</title>
+    <meta name="description" 
+        content="OrgMiner - Arya - Visualize organizational models">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" 
+        href="{{url_for('static', filename='bootstrap-4.5.0-dist/css/bootstrap.min.css')}}">
+    <link rel="stylesheet" 
+        href="{{url_for('static', filename='css/arya.css')}}">
+
+</head>
+
+<body>
+    <!-- putting header inside container will prevent full width navbar -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-secondary">
+            <a class="navbar-brand text-light text-monospace" href="#">
+                OrgMiner-Arya
+            </a>
+
+            <!-- create a button for collapsing the menu -->
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item active">
+                        <a class="text-light nav-link" href="#"> Discovery </a>
+                    </li>
+                    <li class="nav-item text-light">
+                        <a class="nav-link disabled" href="#"> Conformance </a>
+                    </li>
+                    <li class="nav-item text-light">
+                        <a class="nav-link disabled" href="#"> Enhancement </a>
+                    </li>
+                </ul>
+            </div>
+
+        </nav>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-primary" role="alert">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %} 
+
+        {% block head %}{% endblock %}
+
+    </header>
+
+
+    <!-- main page content goes in container -->
+    <div class="container-fluid">
+        <main>
+            {% block main %}{% endblock %}
+        </main>
+    </div>
+
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="{{url_for('static', filename='js/jquery-3.5.1.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+    <script src="{{url_for('static', filename='bootstrap-4.5.0-dist/js/bootstrap.min.js')}}"></script>
+    {% block javascript %}{% endblock %}
+
+</body>
+
+</html>
