@@ -4,36 +4,35 @@ import pygraphviz as pgv
 import sys
 from os.path import join
 
-from . import app
+from . import app, APP_STATIC
 
-bp = Blueprint('main', __name__)
+bp = Blueprint('visualization', __name__)
 
 # Discover an organizational model with the approach as configured
 # Show a discovered organizational model (and a process model if requested)
-@bp.route('/demo')
-def handler_view_demo():
-    fn = 'demo/toy_example.om'
-    #fn = 'demo/toy_example_overlapped.om'
+@bp.route('/visualize_demo')
+def visualize_demo():
+    fn = join('demo', 'toy_example.om')
+    #fn = join('demo', 'toy_example_overlapped.om')
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    with open(url_for('static', ), 'r') as f:
+    with open(join(APP_STATIC, fn), 'r') as f:
         demo_om = OrganizationalModel.from_file_csv(f)
 
-    data_org_model = build_org_model_data(demo_om)
+    data_org_model = draw_org_model(demo_om)
 
     return render_template('visualize.html',
         data_org_model=data_org_model)
 
 
-@bp.route('/view', methods=['POST'])
-def handler_view_results():
-    configs = eval(str(request.get_json()))
-    om = discover_org_model(
-        join(app.config['UPLOAD_FOLDER'], session['user_id']),
-        session['last_upload_filetype'],
-        configs
-    )
-    data_org_model = build_org_model_data(om)
+@bp.route('/visualize', methods=['GET'])
+def visualize():
+    fn_om = '{}.om'.format(session['user_id'])
+    fp_om = join(app.config['TEMP'], fn_om)
+    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
+    with open(fp_om, 'r') as f:
+        om = OrganizationalModel.from_file_csv(f)
+    data_org_model = draw_org_model(om)
     return render_template('visualize.html',
         data_org_model=data_org_model)
 
@@ -42,9 +41,9 @@ def handler_view_results():
 @bp.route('/mine_process_model/<case_type>/')
 def handler_mine_process_model(case_type):
     case_type = None if case_type == 'None' else case_type
-    return discover_process_model(
-        join(app.config['UPLOAD_FOLDER'], session['user_id']),
-        session['last_upload_filetype'],
+    return discover_draw_process_model(
+        join(app.config['TEMP'], session['last_upload_log_filename']),
+        session['last_upload_log_filetype'],
         case_type, [])
 
 
@@ -52,78 +51,23 @@ def handler_mine_process_model(case_type):
 @bp.route('/mine_process_model/<case_type>/<hl_activity_types>')
 def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
     case_type = None if case_type == 'None' else case_type
-    return discover_process_model(
-        join(app.config['UPLOAD_FOLDER'], session['user_id']),
-        session['last_upload_filetype'],
+    return discover_draw_process_model(
+        join(app.config['TEMP'], session['last_upload_log_filename']),
+        session['last_upload_log_filetype'],
         case_type, hl_activity_types.split(','))
 
 
 '''
 Functions
 '''
-from .utilities import _import_block
+DELIM = app.config['ID_DELIMITER']
 from .utilities import _trim_activity_label_tail
 
-delim = '/::/'
-
-def discover_org_model(path_server_event_log, filetype_server_event_log, 
-    configs):
-    with open(path_server_event_log, 'r') as f:
-        if filetype_server_event_log == 'csv':
-            from orgminer.IO.reader import read_disco_csv
-            el = read_disco_csv(f)
-        elif filetype_server_event_log == 'xes':
-            from orgminer.IO.reader import read_xes
-            el = read_xes(f)
-        else:
-            pass
-
-    # Phase 1
-    cls_exec_mode_miner = _import_block('orgminer.ExecutionModeMiner.' +
-        configs[0]['method']) 
-    params = configs[0]['params'] if len(configs[0]['params']) > 0 else None
-    if params is None:
-        exec_mode_miner = cls_exec_mode_miner(el)
-    else:
-        exec_mode_miner = cls_exec_mode_miner(el, **params)
-    rl = exec_mode_miner.derive_resource_log(el)
-    with open(path_server_event_log + '.mode_miner', 'w') as f:
-        exec_mode_miner.to_file(f)
-
-    # Phase 2
-    from orgminer.ResourceProfiler.raw_profiler import count_execution_frequency
-    profiles = count_execution_frequency(rl)
-
-    group_discoverer = _import_block('orgminer.OrganizationalModelMiner.' +
-        configs[1]['method'])
-    params = configs[1]['params'] if len(configs[1]['params']) > 0 else None
-    if params is None:
-        ogs = group_discoverer(profiles)
-    else:
-        ogs = group_discoverer(profiles, **params)
-
-    if type(ogs) is tuple:
-        ogs = ogs[0]
-
-    # Phase 3
-    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    om = OrganizationalModel()
-    mode_assigner = _import_block('orgminer.OrganizationalModelMiner.' +
-        'mode_assignment.' + configs[2]['method'])
-    params = configs[2]['params'] if len(configs[2]['params']) > 0 else None
-    if params is None:
-        om = mode_assigner(ogs, rl)
-    else:
-        om = mode_assigner(ogs, rl, **params)
-
-    return om
-
-
-def build_org_model_data(om):
+def draw_org_model(om):
     data_dict = dict()
     for og_id, og in om.find_all_groups():
         # groups
-        group_node_id = 'group' + delim + '{}'.format(og_id)
+        group_node_id = 'group' + DELIM + '{}'.format(og_id)
         data_dict[group_node_id] = {
             '_type': 'node',
             'label': 'Group {}'.format(og_id),
@@ -132,7 +76,7 @@ def build_org_model_data(om):
 
         # member resources, and connecting edges to groups
         for resource in og:
-            resource_node_id = 'resource' + delim + '{}'.format(resource)
+            resource_node_id = 'resource' + DELIM + '{}'.format(resource)
             data_dict[resource_node_id] = {
                 '_type': 'node',
                 'label': '{}'.format(resource),
@@ -149,7 +93,7 @@ def build_org_model_data(om):
         exec_modes = om.find_group_execution_modes(og_id)
         for em in exec_modes:
             ct, at, tt = em[0], em[1], em[2]
-            mode_node_id = 'mode' + delim + '({},{},{})'.format(ct, at, tt)
+            mode_node_id = 'mode' + DELIM + '({},{},{})'.format(ct, at, tt)
             data_dict[mode_node_id] = {
                 '_type': 'node',
                 'label': '{}, {}, {}'.format(em[0], em[1], em[2]),
@@ -164,7 +108,9 @@ def build_org_model_data(om):
     return dumps(data_dict)
 
 
-def discover_process_model(path_server_event_log, filetype_server_event_log,
+def discover_draw_process_model(
+    path_server_event_log, 
+    filetype_server_event_log,
     case_type=None, hl_activity_types=None):
     with open(path_server_event_log, 'r') as f:
         if filetype_server_event_log == 'csv':

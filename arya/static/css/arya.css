@@ -7,33 +7,10 @@
 }
 
 /*--------------------------------------------------------------------*/
-div#container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 1000px;
-  width: 100%;
-}
 
-div#box-instruction-input-log {
-  width: 90%;
-  border: 2px solid black;
-  padding: 50px;
-  margin: 10px;
-}
-
-div#box-config {
-  width: 90%;
-  border: 2px solid black;
-  padding: 50px;
-  margin: 10px;
-}
-
-div.box-subconfig{
-  border: 1px dotted black;
-  padding: 15px;
-  margin: 2px;
+/* Change default caption style of BS4 */
+caption {
+  caption-side: top;
 }
 
 /*--------------------------------------------------------------------*/

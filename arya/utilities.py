@@ -1,14 +1,10 @@
-def is_uploaded_file_allowed(fn_event_log):
-    ALLOWED_EXT = {'csv', 'xes'}
-    file_ext = '.' in fn_event_log and fn_event_log.rsplit('.', 1)[1].lower()
-    if file_ext in ALLOWED_EXT:
-        return file_ext
-    else:
-        return False
+def get_file_extension(fn):
+    return fn.rsplit('.', 1)[1].lower()
 
 
-def create_user_id():
+def random_id_hex64d():
     from random import randrange
+    # generate ID taking the first 64 digits of a random Hex number
     return '{:x}'.format(randrange(10**32))[:64]
 
 
