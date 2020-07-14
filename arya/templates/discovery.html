@@ -2,6 +2,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block main %}
+<div class="container-fluid">
 <div class="row">
 <div class="w-50 mx-auto my-4 border border-dark rounded p-4">
     <h4 class="mb-4"> Import an event log </h4>
@@ -81,11 +82,11 @@
 
 {% if has_log %}
 <div class="row">
-<div class="w-50 mx-auto my-4 border border-dark rounded p-4">
+<div class="w-75 mx-auto my-4 border border-dark rounded p-4">
     <h4 class="mb-4"> Configure discovery approach</h4>
 
     <div class="row my-4">
-        <img class="img-fluid w-75 mx-auto d-block" 
+        <img class="img-fluid w-50 mx-auto d-block" 
             src="{{ url_for('static', filename='resources/approach.png')
         }}" 
             alt="Approach">
@@ -165,11 +166,22 @@
         )}}
         </div>
     </form>
+
+    <div class="modal fade" id="modal-wait">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                Please wait for the page to be refreshed.
+            </div>
+        </div>
+        </div>
+    </div>
 </div>
 </div>
 {% else %}
 {% endif %}
 
+</div>
 </div>
 {% endblock %}
 
@@ -202,82 +214,12 @@
             }
 
         });
+
+        // Others: attach modal dialog
+        $("input.btn[value='Discover model']").click(function() {
+            $("#modal-wait").modal();
+        });
     });
-
-    /*
-    var fetchConfig = function(phase) {
-        var config = new Object();
-
-        config["method"] = document.querySelector(
-            "input[name=" + phase + "]:checked").value;
-
-        var subConfig = new Object();
-        for (var paramElem of document.querySelectorAll(
-            "form.is-visible > [name=" + phase + "-subopt]")) {
-            const param = paramElem.getAttribute("param");
-            switch (paramElem.tagName.toLowerCase()) {
-                case "input":
-                    switch (paramElem.getAttribute("type")) {
-                        case "radio":
-                            var value = paramElem.querySelector(
-                                "input:checked").value;
-                            break;
-                        case "number":
-                            var value = Number(paramElem.value);
-                            break;
-                        case "text":
-                            var value = paramElem.value;
-                            break;
-                        default:
-                            // do nothing (should not fall into here)
-                    }
-                    break;
-                case "select":
-                    var value = paramElem.options[paramElem.selectedIndex]
-                        .value;
-                    break;
-                default:
-                    // do nothing (should not fall into here)
-            }
-            subConfig[param] = value;
-        }
-        config["params"] = subConfig;
-
-        return config;
-    };
-
-    var btnSubmit = document.getElementById("btn-submit-config");
-    btnSubmit.addEventListener("click", function() {
-        {% if has_log %}
-            alert("Please wait until the results are derived and" +
-                " visualized.");
-            this.disabled = true;
-
-            const cfgPhase1 = fetchConfig("phase1"); 
-            const cfgPhase2 = fetchConfig("phase2"); 
-            const cfgPhase3 = fetchConfig("phase3"); 
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (this.readyState === XMLHttpRequest.DONE 
-                    && this.status === 200) {
-                    document.open();
-                    document.write(xhr.responseText);
-                    document.close();
-                }
-            };
-            xhr.open("POST", "/view", false);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify([
-                cfgPhase1, cfgPhase2, cfgPhase3
-            ]));
-
-        {% else %}
-            alert("No event log file has been provided yet. " +
-                "Please check again.");
-        {% endif %}
-    });
-    */
 
 </script>
 {% endblock %}

@@ -2,23 +2,129 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block main %}
-<div id="container">
-    Canvas for plotting an organizational model.
-    <div id="canvas-org-m">
-        <!-- <button id="reset-org-m-vis" label="organizational-model" 
-            type="button" class="reset-btn"> Reset view </button> -->
-        <button id="export-org-m-vis" label="organizational-model" 
-            type="button" class="export-btn"> Export SVG </button>
+<div class="container-fluid">
+<!-- Outer row-->
+<div class="row">
+
+<!-- Left panel: for model visualization -->
+<div class="col-md-9">
+
+    <div class="row my-3">
+    <div class="col-md">
+        <div class="row shadow-sm">
+        <div class="col-4">
+            <ul class="nav nav-pills small">
+                <li class="nav-item">
+                    <a class="nav-link bg-info text-white active">
+                        Organizational model view
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-8">
+            <ul class="nav nav-pills small float-right">
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white reset-btn"
+                        label="organizational-model">
+                        Reset view
+                    </a>
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white export-btn"
+                        label="organizational-model">
+                        Export SVG
+                    </a>
+                </li>
+            </ul>
+        </div>
+        </div>
+
+        <div class="row">
+        <div class="col mx-auto canvas border border-info rounded shadow" 
+            id="canvas-org-m" label="organizational-model">
+        </div>
+        </div>
+    </div>
     </div>
 
-    Canvas for plotting a process model of:
-    <div id="proc-m-title"></div>
-    <div id="canvas-proc-m">
-        <!-- <button id="reset-proc-m-vis" label="process-model"
-            type="button" class="reset-btn"> Reset view </button> -->
-        <button id="export-proc-m-vis" label="process-model"
-            type="button" class="export-btn"> Export SVG </button>
+    <div class="row my-3">
+    <div class="col-md">
+        <div class="row shadow-sm">
+        <div class="col-4">
+            <ul class="nav nav-pills small">
+                <li class="nav-item">
+                    <a class="nav-link bg-info text-white active">
+                        Process model view
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-8">
+            <ul class="nav nav-pills small float-right">
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white reset-btn"
+                        label="process-model">
+                        Reset view
+                    </a>
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white export-btn"
+                        label="process-model">
+                        Export SVG
+                    </a>
+                </li>
+            </ul>
+        </div>
+        </div>
+
+        <div id="proc-m-title"></div>
+        <div class="row">
+        <div class="col mx-auto canvas border border-info rounded" 
+            id="canvas-proc-m" label="process-model">
+        </div>
+        </div>
     </div>
+    </div>
+</div>
+
+<!-- Right panel: for statistics report -->
+<div class="col-md-3">
+
+    <div class="row my-3">
+    <div class="col-sm">
+        <ul class="nav nav-pills small">
+            <li class="nav-item">
+                <a class="nav-link bg-info text-white active">
+                    Global Conformance
+                </a>
+            </li>
+        </ul>
+        <div class="border border-info rounded">
+
+        </div>
+    </div>
+    </div>
+
+    <div class="row my-3">
+    <div class="col-sm">
+        <ul class="nav nav-pills small">
+            <li class="nav-item">
+                <a class="nav-link bg-info text-white active">
+                    Local Diagnostics
+                </a>
+            </li>
+        </ul>
+        <div class="border border-info rounded">
+
+        </div>
+    </div>
+    </div>
+
+</div>
+
+<!-- End of outer row -->
+</div>
+<!-- End of container -->
 </div>
 {% endblock %}
 
@@ -84,15 +190,20 @@
     renderOrgM(initNodeList, initEdgeList);
 
     /* TODO: Setup for reset svg zoom. */
-    d3.selectAll(".reset-btn").on("click", function() {
+    $(".reset-btn").click(function() {
         // do nothing
+        var label = $(this).attr("label");
+        alert("TODO: refresh the view of " + label);
     });
 
 
     /* Setup for svg export. */
-    d3.selectAll(".export-btn").on("click", function() {
-        d3_save_svg.save(d3.select(this.parentNode).select("svg").node(), 
-            {filename: this.getAttribute("label")});
+    $(".export-btn").click(function() {
+        var label = $(this).attr("label");
+        d3_save_svg.save(
+            d3.select(".canvas[label='" + label + "']")
+                .select("svg").node(), 
+            {filename: label});
     });
 
 
