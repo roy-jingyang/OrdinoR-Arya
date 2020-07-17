@@ -7,12 +7,11 @@
 <div class="row">
 
 <!-- Left panel: for model visualization -->
-<div class="col-md-9">
-
+<div class="col-lg-8 col-xl-9">
     <div class="row my-3">
-    <div class="col-md">
+    <div class="col">
         <div class="row shadow-sm">
-        <div class="col-4">
+        <div class="col-4 px-0">
             <ul class="nav nav-pills small">
                 <li class="nav-item">
                     <a class="nav-link bg-info text-white active">
@@ -21,7 +20,7 @@
                 </li>
             </ul>
         </div>
-        <div class="col-8">
+        <div class="col-8 px-0">
             <ul class="nav nav-pills small float-right">
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white reset-btn"
@@ -48,9 +47,9 @@
     </div>
 
     <div class="row my-3">
-    <div class="col-md">
+    <div class="col">
         <div class="row shadow-sm">
-        <div class="col-4">
+        <div class="col-4 px-0">
             <ul class="nav nav-pills small">
                 <li class="nav-item">
                     <a class="nav-link bg-info text-white active">
@@ -59,7 +58,7 @@
                 </li>
             </ul>
         </div>
-        <div class="col-8">
+        <div class="col-8 px-0">
             <ul class="nav nav-pills small float-right">
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white reset-btn"
@@ -88,10 +87,10 @@
 </div>
 
 <!-- Right panel: for statistics report -->
-<div class="col-md-3">
-
+<div class="col-lg-4 col-xl-3 text-nowrap">
+    <!-- Stats of global conformance -->
     <div class="row my-3">
-    <div class="col-sm">
+    <div class="col">
         <ul class="nav nav-pills small">
             <li class="nav-item">
                 <a class="nav-link bg-info text-white active">
@@ -99,14 +98,50 @@
                 </a>
             </li>
         </ul>
-        <div class="border border-info rounded">
 
+        <div class="border border-info rounded py-2 bg-light">
+            <div class="card-deck mx-auto text-center">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(fitness_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Fitness
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(precision_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Precision
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(f1_score_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        F1-score
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     </div>
 
+    <!-- Stats of local diagnostics -->
     <div class="row my-3">
-    <div class="col-sm">
+    <div class="col">
         <ul class="nav nav-pills small">
             <li class="nav-item">
                 <a class="nav-link bg-info text-white active">
@@ -114,7 +149,182 @@
                 </a>
             </li>
         </ul>
-        <div class="border border-info rounded">
+
+        <div class="border border-info rounded py-2 bg-light container">
+            <!-- 1. Report basic statistics -->
+            <div class="row mt-2">
+            <div class="card mx-auto text-center border-0">
+                <div class="card-body font-weight-bold py-1 bg-light"
+                    id="ld-group-name">
+                    <h5 class="score-card-val">-</h5>
+                </div>
+            </div>
+            </div>
+
+            <div class="row mt-2">
+            <div class="card-deck mx-auto text-center">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-group-mem-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Members
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-group-cap-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Capabilities
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-group-events-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Originated<br>Events
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="row mt-3">
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-left
+                        bg-light border-0 py-0">
+                        Case<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0" id="ld-mode-ct">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-left
+                        bg-light border-0 py-0">
+                        Activity<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0" id="ld-mode-at">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-right
+                        bg-light border-0 py-0">
+                        Time<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0" id="ld-mode-tt">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="row mt-3">
+            <div class="card-deck mx-auto text-center">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-mode-event-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Executions<br>(total)
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-group-cap-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Executions<br>(this group)
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-group-events-num">
+                        <h5 class="score-card-val">0</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Groups<br>(capable)
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- This is a cutting line -->
+            <div class="row col-12 border-bottom mt-3 mx-0"></div>
+
+            <!-- 2. Report local diagnostic measures -->
+            <div class="row mt-3">
+            <div class="card-deck mx-auto text-center">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-relative-focus">
+                        <h5 class="score-card-val">9.999</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Relative<br>focus
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-relative-stake">
+                        <h5 class="score-card-val">9.999</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Relative<br>Stake
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold py-1 bg-light"
+                        id="ld-coverage">
+                        <h5 class="score-card-val">9.999</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0">
+                        Coverage
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12 mx-auto card-footer 
+                    small text-secondary text-center border-0 bg-light">
+                    Member Contribution
+                </div>
+                <div class="col-12 mx-auto border border-warning" 
+                    id="canvas-ld-memcontr">
+                    (This is a canvas for plotting the bar chart)
+                </div>
+            </div>
 
         </div>
     </div>
@@ -142,10 +352,11 @@
     // retrieve organizational model data
     var orgModelData = {{ data_org_model|tojson }};
 
-    const delim = '/::/'; // NOTE: must define for data exchange
+    const delim = new String({{ DELIM }});
 
     var df = new DataFactory(orgModelData);
-    var waiter = new Waiter(df);
+    var sc = new ScoreCard();
+    var waiter = new Waiter(df, sc);
 
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);

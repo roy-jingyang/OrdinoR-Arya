@@ -23,15 +23,18 @@ def index_discover_org_model():
         if 'user_id' in session and \
             'last_upload_log_filename' in session:
             fn_server = session['last_upload_log_filename']
-            with open(join(app.config['TEMP'], fn_server), 'r') as f:
-                if session['last_upload_log_filetype'] == 'csv':
-                    from orgminer.IO.reader import read_disco_csv
-                    el = read_disco_csv(f)
-                elif session['last_upload_log_filetype'] == 'xes':
-                    from orgminer.IO.reader import read_xes
-                    el = read_xes(f)
-                else:
-                    pass
+            try:
+                with open(join(app.config['TEMP'], fn_server), 'r') as f:
+                    if session['last_upload_log_filetype'] == 'csv':
+                        from orgminer.IO.reader import read_disco_csv
+                        el = read_disco_csv(f)
+                    elif session['last_upload_log_filetype'] == 'xes':
+                        from orgminer.IO.reader import read_xes
+                        el = read_xes(f)
+                    else:
+                        pass
+            except FileNotFoundError:
+                return redirect(url_for('.reset'))
         else:
             return render_template('discovery.html',
                 has_log=False,
@@ -142,7 +145,12 @@ def reset():
     from os import remove
     fp_server = join(
         app.config['TEMP'], session['last_upload_log_filename'])
-    remove(fp_server)
+    from os.path import isfile
+    if isfile(fp_server):
+        remove(fp_server)
+    else:
+        print('File already removed')
+
     del session['last_upload_log_name']
     del session['last_upload_log_filename']
     del session['last_upload_log_filetype']

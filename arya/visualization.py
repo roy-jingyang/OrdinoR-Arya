@@ -8,33 +8,75 @@ from . import app, APP_STATIC
 
 bp = Blueprint('visualization', __name__)
 
+DELIM = app.config['ID_DELIMITER']
+
 # Discover an organizational model with the approach as configured
 # Show a discovered organizational model (and a process model if requested)
 @bp.route('/visualize_demo')
 def visualize_demo():
     fn = join('demo', 'toy_example.om')
-    #fn = join('demo', 'toy_example_overlapped.om')
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(join(APP_STATIC, fn), 'r') as f:
         demo_om = OrganizationalModel.from_file_csv(f)
 
     data_org_model = draw_org_model(demo_om)
+    demo_fitness = 1.0
+    demo_precision = 0.883
+    demo_f1_score= (2 * (demo_fitness * demo_precision) / 
+        (demo_fitness + demo_precision))
 
     return render_template('visualize.html',
-        data_org_model=data_org_model)
+        DELIM=DELIM,
+        data_org_model=data_org_model,
+        fitness_org_model=demo_fitness, 
+        precision_org_model=demo_precision, 
+        f1_score_org_model=demo_f1_score,
+    )
 
 
 @bp.route('/visualize', methods=['GET'])
 def visualize():
+    # retrieve organizational model
     fn_om = '{}.om'.format(session['user_id'])
     fp_om = join(app.config['TEMP'], fn_om)
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fp_om, 'r') as f:
         om = OrganizationalModel.from_file_csv(f)
+    
+    # generate visualization data
     data_org_model = draw_org_model(om)
+
+    # calculate global conformance data
+    fp_log = join(app.config['TEMP'], session['last_upload_log_filename'])
+    from orgminer.ExecutionModeMiner.base import BaseMiner 
+    fn_mode_miner = session['last_upload_log_filename'] + '.mode_miner'
+    fp_mode_miner = join(app.config['TEMP'], fn_mode_miner)
+
+    with open(fp_log, 'r') as f_log, \
+        open(fp_mode_miner, 'r') as f_mode_miner:
+        if session['last_upload_log_filetype'] == 'csv':
+            from orgminer.IO.reader import read_disco_csv
+            el = read_disco_csv(f_log)
+        elif session['last_upload_log_filetype'] == 'xes':
+            from orgminer.IO.reader import read_xes
+            el = read_xes(f_log)
+        else:
+            pass
+        exec_mode_miner = BaseMiner.from_file(f_mode_miner)
+        rl = exec_mode_miner.derive_resource_log(el)
+
+    from orgminer.Evaluation.l2m.conformance import fitness, precision
+    fitness = fitness(rl, om)
+    precision = precision(rl, om)
+    f1_score = 2 * (fitness * precision) / (fitness + precision)
     return render_template('visualize.html',
-        data_org_model=data_org_model)
+        DELIM=DELIM,
+        data_org_model=data_org_model,
+        fitness_org_model=fitness, 
+        precision_org_model=precision, 
+        f1_score_org_model=f1_score,
+    )
 
 
 # Discover a process model correspondingly
@@ -60,7 +102,6 @@ def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
 '''
 Functions
 '''
-DELIM = app.config['ID_DELIMITER']
 from .utilities import _trim_activity_label_tail
 
 def draw_org_model(om):

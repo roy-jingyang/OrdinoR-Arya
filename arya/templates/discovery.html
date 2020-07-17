@@ -167,19 +167,22 @@
         </div>
     </form>
 
-    <div class="modal fade" id="modal-wait">
-        <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-body">
-                Please wait for the page to be refreshed.
-            </div>
-        </div>
-        </div>
-    </div>
 </div>
 </div>
 {% else %}
 {% endif %}
+
+<div class="modal fade" id="modal-wait">
+    <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-body">
+            <span class="spinner-border spinner-border-sm text-secondary">
+            </span>
+            <div id="modal-wait-message"></div>
+        </div>
+    </div>
+    </div>
+</div>
 
 </div>
 </div>
@@ -215,8 +218,17 @@
 
         });
 
-        // Others: attach modal dialog
+        // Others: attach modal dialogs
+        $("input.btn[value='Upload']").click(function() {
+            $("#modal-wait-message").text(
+                "Uploading event log ..."
+            )
+            $("#modal-wait").modal();
+        });
         $("input.btn[value='Discover model']").click(function() {
+            $("#modal-wait-message").text(
+                "Discovering organizational model ..."
+            )
             $("#modal-wait").modal();
         });
     });

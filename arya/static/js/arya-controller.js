@@ -2,13 +2,14 @@
 // class for handling all interactions
 // singleton class
 class Waiter {
-    constructor(df) {
+    constructor(df, sc) {
         // check existence
         if (!!Waiter.instance)
             return Waiter.instance;
         Waiter.instance = this;
 
         this.df = df;
+        this.sc = sc;
 
         this.nodeStatusTracker = new Map();
 
@@ -146,6 +147,7 @@ class Waiter {
         var prevent = false;
         groupNode.on("click", function() {
             var groupNodeId = d3.select(this).select("title").text();
+            var groupNodeName = d3.select(this).select("text").text();
             timer = setTimeout(function() {
                 if (!prevent) {
                     var memberIds = self.df
@@ -155,6 +157,8 @@ class Waiter {
                         .get(groupNodeId).indexOf("click");
                     if (status == -1) {
                         //console.log("not clicked. Setting");
+                        self.sc.toggleGroupName(groupNodeName);
+
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).push("click");
                         var newEdges = [];
@@ -176,6 +180,8 @@ class Waiter {
                         );
                     } else {
                         //console.log("already clicked. Reverting");
+                        self.sc.toggleGroupName();
+
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).splice(status, 1);
                         for (var nodeId of memberIds) {
@@ -206,6 +212,7 @@ class Waiter {
             prevent = true;
 
             var groupNodeId = d3.select(this).select("title").text();
+            var groupNodeName = d3.select(this).select("text").text();
 
             var capIds = self.df.getCapabilityNodeIdsByGroup(groupNodeId);
 
@@ -221,6 +228,8 @@ class Waiter {
                 .get(groupNodeId).indexOf("dblclick");
             if (status == -1) {
                 //console.log("not clicked. Setting");
+                self.sc.toggleGroupName(groupNodeName);
+
                 self.nodeStatusTracker.set("focus", groupNodeId);
 
                 // switch focus: there can only be one
@@ -264,6 +273,8 @@ class Waiter {
                 );
             } else {
                 //console.log("already clicked. Reverting");
+                self.sc.toggleGroupName();
+
                 // remove focus
                 self.nodeStatusTracker.set("focus", null);
                 // remove interaction marking
@@ -321,6 +332,7 @@ class Waiter {
 
         modeNode.on("dblclick", function() {
             var modeNodeId = d3.select(this).select("title").text();
+            var modeNodeName = d3.select(this).select("text").text();
             var currentGroup = self.nodeStatusTracker.get("focus");
             var capIds = (currentGroup == null ? 
                 null : self.df.getCapabilityNodeIdsByGroup(currentGroup));
@@ -333,6 +345,8 @@ class Waiter {
 
                 if (status == -1) {
                     //console.log("not clicked. Setting");
+                    self.sc.toggleModeCT(modeNodeName);
+
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).push("dblclick");
 
@@ -353,6 +367,10 @@ class Waiter {
                     );
                 } else {
                     //console.log("already clicked. Reverting");
+                    self.sc.toggleModeCT();
+                    self.sc.toggleModeAT();
+                    self.sc.toggleModeTT();
+
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);
                     renderOrgM(
@@ -371,6 +389,8 @@ class Waiter {
                     renderProcMDot(null);
 
                     //console.log("not clicked. Setting");
+                    self.sc.toggleModeTT(modeNodeName);
+
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).push("dblclick");
 
@@ -412,8 +432,13 @@ class Waiter {
                         .get(function(xhr) {
                         renderProcMDot(xhr.response, procMTitle);
                     });
+
+                    // TODO: add request for displaying local diagnostics
                 } else {
                     //console.log("already clicked. Reverting");
+                    self.sc.toggleModeTT();
+                    self.sc.toggleModeAT();
+
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);
                     renderOrgM(
@@ -424,13 +449,80 @@ class Waiter {
                     );
                 }
 
-            } else { // (self.df.modeTree.getNodeLevel(modeNodeId) == 3)
-                // do nothing
+            } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 3) {
+                // dblclick on third level execution modes
+                var status = self.nodeStatusTracker.get("modes")
+                    .get(modeNodeId).indexOf("dblclick");
+
+                if (status == -1) {
+                    //console.log("not clicked. Setting");
+                    self.sc.toggleModeAT(modeNodeName);
+
+                    self.nodeStatusTracker.get("modes")
+                        .get(modeNodeId).push("dblclick");
+                } else {
+                    //console.log("already clicked. Reverting");
+                    self.sc.toggleModeAT();
+
+                    self.nodeStatusTracker.get("modes")
+                        .get(modeNodeId).splice(status, 1);
+                }
             }
-            
+            else {
+                // do nothing (out of scope)
+            } 
         });
         
     }
 
+}
+
+
+/***********************************************************************/
+// class for handling the display of statistics on the panel
+// NOTE: only local diagnostics need to be processed by the class,
+//       as global conformance results are fixed once a model is given
+// singleton class
+class ScoreCard {
+    constructor() {
+        // check existence
+        if (!!ScoreCard.instance)
+            return ScoreCard.instance;
+        ScoreCard.instance = this;
+    }
+
+    toggleGroupName(groupName) {
+        if (groupName == null)
+            $("#ld-group-name").text('-');
+        else
+            $("#ld-group-name").text(groupName);
+    }
+
+    toggleModeCT(typeName) {
+        if (typeName == null) {
+            $("#ld-mode-ct").text('-');
+        } else {
+            var typeName = typeName.split(',')[0];
+            $("#ld-mode-ct").text(typeName);
+        }
+    }
+
+    toggleModeAT(typeName) {
+        if (typeName == null) {
+            $("#ld-mode-at").text('-');
+        } else {
+            var typeName = typeName.split(',')[1];
+            $("#ld-mode-at").text(typeName);
+        }
+    }
+
+    toggleModeTT(typeName) {
+        if (typeName == null) {
+            $("#ld-mode-tt").text('-');
+        } else {
+            var typeName = typeName.split(',')[2];
+            $("#ld-mode-tt").text(typeName);
+        }
+    }
 }
 
