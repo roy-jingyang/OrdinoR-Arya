@@ -166,7 +166,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-group-mem-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -176,7 +176,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-group-cap-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -186,7 +186,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-group-events-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -200,7 +200,7 @@
             <div class="row col-12 mt-2">
                 <div class="col-3">
                     <div class="card-footer text-secondary text-left
-                        bg-light border-0 py-0">
+                        bg-light border-0 py-0 small">
                         Case<br>Type
                     </div>
                 </div>
@@ -214,7 +214,7 @@
             <div class="row col-12 mt-2">
                 <div class="col-3">
                     <div class="card-footer text-secondary text-left
-                        bg-light border-0 py-0">
+                        bg-light border-0 py-0 small">
                         Activity<br>Type
                     </div>
                 </div>
@@ -228,7 +228,7 @@
             <div class="row col-12 mt-2">
                 <div class="col-3">
                     <div class="card-footer text-secondary text-right
-                        bg-light border-0 py-0">
+                        bg-light border-0 py-0 small">
                         Time<br>Type
                     </div>
                 </div>
@@ -245,7 +245,7 @@
             <div class="card-deck mx-auto text-center">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
-                        id="ld-mode-event-num">
+                        id="ld-mode-events-num">
                         <h5 class="score-card-val">0</h5>
                     </div>
                     <div class="card-footer small text-secondary 
@@ -255,7 +255,7 @@
                 </div>
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
-                        id="ld-group-cap-num">
+                        id="ld-mode-group-events-num">
                         <h5 class="score-card-val">0</h5>
                     </div>
                     <div class="card-footer small text-secondary 
@@ -265,7 +265,7 @@
                 </div>
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
-                        id="ld-group-events-num">
+                        id="ld-mode-group-num">
                         <h5 class="score-card-val">0</h5>
                     </div>
                     <div class="card-footer small text-secondary 
@@ -355,7 +355,7 @@
     const delim = new String({{ DELIM }});
 
     var df = new DataFactory(orgModelData);
-    var sc = new ScoreCard();
+    var sc = new ScoreCard(df);
     var waiter = new Waiter(df, sc);
 
     function renderOrgM(nodeList, edgeList) {

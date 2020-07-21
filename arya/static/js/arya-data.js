@@ -271,6 +271,12 @@ class DataFactory {
         return (caps.concat(firstLevelCapIds, secondLevelCapIds)).sort();
     }
 
+    getNumCapabilitiesByGroup(groupNodeId) {
+        const caps = Array.from(
+            this.edgeListGroupsModes.get(groupNodeId).keys());
+        return caps.length;
+    }
+
     getGroupNodeIdsByResource(resourceNodeId) {
         const groups = Array.from(
             this.edgeListGroupsResources.get(resourceNodeId).keys());

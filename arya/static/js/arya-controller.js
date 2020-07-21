@@ -16,15 +16,15 @@ class Waiter {
         this.nodeStatusTracker.set("focus", null);
 
         this.nodeStatusTracker.set("resources", new Map());
-        for (var resourceNodeId of df.getAllResourceNodeIds())
+        for (var resourceNodeId of this.df.getAllResourceNodeIds())
             this.nodeStatusTracker.get("resources").set(resourceNodeId, []);
 
         this.nodeStatusTracker.set("groups", new Map());
-        for (var groupNodeId of df.getAllGroupNodeIds())
+        for (var groupNodeId of this.df.getAllGroupNodeIds())
             this.nodeStatusTracker.get("groups").set(groupNodeId, []);
 
         this.nodeStatusTracker.set("modes", new Map());
-        for (var modeNodeId of df.getAllModeNodeIds()) {
+        for (var modeNodeId of this.df.getAllModeNodeIds()) {
             this.nodeStatusTracker.get("modes").set(modeNodeId, []);
             var parentNodeId = this.df.modeTree
                 .getParentNodeFromLeaf(modeNodeId);
@@ -86,13 +86,16 @@ class Waiter {
     }
 
     resetToInit() {
-        var allGroupNodes = df.getGroupNodes(df.getAllGroupNodeIds());
+        var self = this;
+
+        var allGroupNodes = self.df.getGroupNodes(
+            self.df.getAllGroupNodeIds());
 
         var allFirstLevelModeNodes = [];
-        for (var modeNodeId of df.getAllModeNodeIds()) {
-            var grandParentNodeId = df.modeTree
+        for (var modeNodeId of self.df.getAllModeNodeIds()) {
+            var grandParentNodeId = self.df.modeTree
                 .getGrandParentNodeFromLeaf(modeNodeId);
-            allFirstLevelModeNodes.push(df.createAugmentedModeNode(
+            allFirstLevelModeNodes.push(self.df.createAugmentedModeNode(
                 grandParentNodeId));
         }
         var initialNodeList = allGroupNodes.concat(allFirstLevelModeNodes);
@@ -147,7 +150,6 @@ class Waiter {
         var prevent = false;
         groupNode.on("click", function() {
             var groupNodeId = d3.select(this).select("title").text();
-            var groupNodeName = d3.select(this).select("text").text();
             timer = setTimeout(function() {
                 if (!prevent) {
                     var memberIds = self.df
@@ -157,10 +159,10 @@ class Waiter {
                         .get(groupNodeId).indexOf("click");
                     if (status == -1) {
                         //console.log("not clicked. Setting");
-                        self.sc.toggleGroupName(groupNodeName);
-
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).push("click");
+                        self.sc.toggleGroupInfo(groupNodeId);
+
                         var newEdges = [];
                         for (var nodeId of memberIds) {
                             self.nodeStatusTracker.get("resources")
@@ -180,10 +182,12 @@ class Waiter {
                         );
                     } else {
                         //console.log("already clicked. Reverting");
-                        self.sc.toggleGroupName();
-
                         self.nodeStatusTracker.get("groups")
                             .get(groupNodeId).splice(status, 1);
+                        if (self.nodeStatusTracker.get("groups")
+                            .get(groupNodeId).length == 0)
+                            self.sc.toggleGroupInfo();
+
                         for (var nodeId of memberIds) {
                             self.nodeStatusTracker.get("resources")
                                 .get(nodeId).splice(groupNodeId, 1);
@@ -212,13 +216,12 @@ class Waiter {
             prevent = true;
 
             var groupNodeId = d3.select(this).select("title").text();
-            var groupNodeName = d3.select(this).select("text").text();
 
             var capIds = self.df.getCapabilityNodeIdsByGroup(groupNodeId);
 
             var allFirstLevelCapIds = new Set();
-            for (var modeNodeId of df.getAllModeNodeIds()) {
-                var grandParentNodeId = df.modeTree
+            for (var modeNodeId of self.df.getAllModeNodeIds()) {
+                var grandParentNodeId = self.df.modeTree
                     .getGrandParentNodeFromLeaf(modeNodeId);
                 allFirstLevelCapIds.add(grandParentNodeId);
             }
@@ -228,8 +231,6 @@ class Waiter {
                 .get(groupNodeId).indexOf("dblclick");
             if (status == -1) {
                 //console.log("not clicked. Setting");
-                self.sc.toggleGroupName(groupNodeName);
-
                 self.nodeStatusTracker.set("focus", groupNodeId);
 
                 // switch focus: there can only be one
@@ -241,6 +242,8 @@ class Waiter {
                         else
                             statusList.splice("dblclick", 1);
                 });
+                self.sc.toggleGroupInfo(groupNodeId);
+
                 // remove all highlights
                 var newNodeList = self.highlightModeNodesById(nodeList,
                     null, false);
@@ -273,13 +276,14 @@ class Waiter {
                 );
             } else {
                 //console.log("already clicked. Reverting");
-                self.sc.toggleGroupName();
-
                 // remove focus
                 self.nodeStatusTracker.set("focus", null);
                 // remove interaction marking
                 self.nodeStatusTracker.get("groups")
                     .get(groupNodeId).splice(status, 1);
+                if (self.nodeStatusTracker.get("groups")
+                    .get(groupNodeId).length == 0)
+                    self.sc.toggleGroupInfo();
 
                 var allChildNodeIds = new Set();
                 for (var firstLevelCapId of allFirstLevelCapIds) {
@@ -484,44 +488,71 @@ class Waiter {
 //       as global conformance results are fixed once a model is given
 // singleton class
 class ScoreCard {
-    constructor() {
+    constructor(df) {
         // check existence
         if (!!ScoreCard.instance)
             return ScoreCard.instance;
         ScoreCard.instance = this;
+
+        this.df = df;
     }
 
-    toggleGroupName(groupName) {
-        if (groupName == null)
-            $("#ld-group-name").text('-');
-        else
-            $("#ld-group-name").text(groupName);
+    toggleGroupInfo(groupNodeId) {
+        var self = this;
+
+        if (groupNodeId == null) {
+            $("#ld-group-name > .score-card-val").text('-');
+            $("#ld-group-mem-num > .score-card-val").text('-');
+            $("#ld-group-cap-num > .score-card-val").text('-');
+            $("#ld-group-events-num > .score-card-val").text('-');
+            $("#ld-mode-group-events-num > .score-card-val").text('-');
+        } else {
+            $("#ld-group-name > .score-card-val").text(
+                self.df.nodeListGroups.get(groupNodeId)["label"]
+            );
+            $("#ld-group-mem-num > .score-card-val").text(
+                self.df.getMemberNodeIdsByGroup(groupNodeId).length
+            );
+            $("#ld-group-cap-num > .score-card-val").text(
+                self.df.getNumCapabilitiesByGroup(groupNodeId)
+            );
+            // TODO
+            $("#ld-group-events-num > .score-card-val").text(
+            
+            );
+            $("#ld-mode-group-events-num > .score-card-val").text(
+
+            );
+        }
+    }
+
+    toggleModeInfo(modeNode) {
     }
 
     toggleModeCT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-ct").text('-');
+            $("#ld-mode-ct > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[0];
-            $("#ld-mode-ct").text(typeName);
+            $("#ld-mode-ct > .score-card-val").text(typeName);
         }
     }
 
     toggleModeAT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-at").text('-');
+            $("#ld-mode-at > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[1];
-            $("#ld-mode-at").text(typeName);
+            $("#ld-mode-at > .score-card-val").text(typeName);
         }
     }
 
     toggleModeTT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-tt").text('-');
+            $("#ld-mode-tt > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[2];
-            $("#ld-mode-tt").text(typeName);
+            $("#ld-mode-tt > .score-card-val").text(typeName);
         }
     }
 }

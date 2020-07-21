@@ -203,7 +203,24 @@ class DiscoveryConfigForm(MethodConfigForm):
                 'config_id': 'assign_exec_modes',
             }
         )
-        param_overall_score_w1 = wtforms.DecimalField(
+        param_overall_score_p = wtforms.FloatField(
+            u'''OverallScore: p (threshold value for the overall
+            score)''',
+            validators=[
+                RequiredIfOnlyEqualsTo(
+                    'method_assign_exec_modes',
+                    ['overall_score']
+                ),
+                wtforms.validators.NumberRange(0, 1.0),
+            ],
+            render_kw={
+                'config_type': 'param',
+                'config_id': 'p',
+                'prerequisite_id': 'assign_exec_modes',
+                'prerequisite_value': 'overall_score',
+            }
+        )
+        param_overall_score_w1 = wtforms.FloatField(
             u'''OverallScore: w1 (weight value for Group Relative Stake)''',
             validators=[
                 RequiredIfOnlyEqualsTo(

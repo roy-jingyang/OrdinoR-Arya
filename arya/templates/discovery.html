@@ -156,6 +156,11 @@
                 discovery_config_form.param_overall_score_w1
             )}}
             </div>
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_overall_score_p
+            )}}
+            </div>
         </div>
         </div>
 
@@ -176,9 +181,8 @@
     <div class="modal-dialog modal-lg">
     <div class="modal-content">
         <div class="modal-body">
-            <span class="spinner-border spinner-border-sm text-secondary">
-            </span>
-            <div id="modal-wait-message"></div>
+            <div class="spinner-border spinner-border-sm text-info"></div>
+            <span id="modal-wait-message"></span>
         </div>
     </div>
     </div>
