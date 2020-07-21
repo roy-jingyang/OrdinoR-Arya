@@ -38,16 +38,20 @@ def visualize_demo():
 @bp.route('/visualize', methods=['GET'])
 def visualize():
     # retrieve organizational model
+    '''
     fn_om = '{}.om'.format(session['user_id'])
     fp_om = join(app.config['TEMP'], fn_om)
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(fp_om, 'r') as f:
         om = OrganizationalModel.from_file_csv(f)
+    '''
+    om = session['org_model']
     
     # generate visualization data
     data_org_model = draw_org_model(om)
 
     # calculate global conformance data
+    '''
     fp_log = join(app.config['TEMP'], session['last_upload_log_filename'])
     from orgminer.ExecutionModeMiner.base import BaseMiner 
     fn_mode_miner = session['last_upload_log_filename'] + '.mode_miner'
@@ -65,6 +69,10 @@ def visualize():
             pass
         exec_mode_miner = BaseMiner.from_file(f_mode_miner)
         rl = exec_mode_miner.derive_resource_log(el)
+    '''
+    el = session['event_log']
+    exec_mode_miner = session['exec_mode_miner']
+    rl = exec_mode_miner.derive_resource_log(el)
 
     from orgminer.Evaluation.l2m.conformance import fitness, precision
     fitness = fitness(rl, om)
@@ -86,6 +94,7 @@ def handler_mine_process_model(case_type):
     return discover_draw_process_model(
         join(app.config['TEMP'], session['last_upload_log_filename']),
         session['last_upload_log_filetype'],
+        session['exec_mode_miner'],
         case_type, [])
 
 
@@ -96,6 +105,7 @@ def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
     return discover_draw_process_model(
         join(app.config['TEMP'], session['last_upload_log_filename']),
         session['last_upload_log_filetype'],
+        session['exec_mode_miner'],
         case_type, hl_activity_types.split(','))
 
 
@@ -152,6 +162,7 @@ def draw_org_model(om):
 def discover_draw_process_model(
     path_server_event_log, 
     filetype_server_event_log,
+    exec_mode_miner,
     case_type=None, hl_activity_types=None):
     with open(path_server_event_log, 'r') as f:
         if filetype_server_event_log == 'csv':
@@ -163,13 +174,15 @@ def discover_draw_process_model(
             from pm4py.objects.log.importer.xes import factory
             pm4py_log = factory.apply(path_server_event_log)
         else:
-            pass
+            raise TypeError('Invalid event log filetype')
 
+    '''
     from orgminer.ExecutionModeMiner.base import BaseMiner
     with open(path_server_event_log + '.mode_miner', 'r') as f:
         mode_miner = BaseMiner.from_file(f) 
+    '''
 
-    sel_cases = mode_miner.get_values_by_type(case_type) \
+    sel_cases = exec_mode_miner.get_values_by_type(case_type) \
         if case_type is not None else set(el['case_id'])
     # NOTE: CSV only - trim the additional markings appended by Disco
     '''
