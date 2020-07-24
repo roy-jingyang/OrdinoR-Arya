@@ -231,10 +231,24 @@ class Waiter {
                 .get(groupNodeId).indexOf("dblclick");
             if (status == -1) {
                 //console.log("not clicked. Setting");
-                self.nodeStatusTracker.set("focus", groupNodeId);
 
-                // switch focus: there can only be one
+                // switch focus: there can only be one group under focus
+
+                // remove all highlights
+                var newNodeList = self.highlightModeNodesById(nodeList,
+                    null, false);
+                newNodeList = self.highlightGroupNodebyId(newNodeList,
+                    null, false);
+                // remove all edges to caps
+                var newEdgeList = self.df.removeEdges(edgeList,
+                    self.nodeStatusTracker.get("focus"), 
+                    allFirstLevelCapIds);
+
+                // highlight current focus
+                self.sc.toggleGroupInfo(groupNodeId);
+
                 // remove all interaction markings from other nodes
+                self.nodeStatusTracker.set("focus", groupNodeId);
                 self.nodeStatusTracker.get("groups").forEach(
                     function(statusList, id, map) {
                         if (id == groupNodeId)
@@ -242,17 +256,9 @@ class Waiter {
                         else
                             statusList.splice("dblclick", 1);
                 });
-                self.sc.toggleGroupInfo(groupNodeId);
 
-                // remove all highlights
-                var newNodeList = self.highlightModeNodesById(nodeList,
-                    null, false);
-                newNodeList = self.highlightGroupNodebyId(newNodeList,
-                    null, false);
-                // highlight current focus
                 newNodeList = self.highlightGroupNodebyId(newNodeList,
                     groupNodeId, true);
-                
                 var allFirstLevelCaps = [];
                 var newEdges = [];
                 for (var nodeId of allFirstLevelCapIds) {
@@ -272,7 +278,7 @@ class Waiter {
 
                 renderOrgM(
                     newNodeList,
-                    edgeList.concat(newEdges)
+                    newEdgeList.concat(newEdges)
                 );
             } else {
                 //console.log("already clicked. Reverting");
@@ -293,7 +299,7 @@ class Waiter {
                 }
                 allChildNodeIds = Array.from(allChildNodeIds);
 
-                // remove all highlights
+                // remove all highlights on modes related to the group
                 var newNodeList = self.highlightModeNodesById(
                     //self.df.removeNodes(nodeList, allChildNodeIds),
                     nodeList,
@@ -301,17 +307,15 @@ class Waiter {
                 newNodeList = self.highlightGroupNodebyId(newNodeList, 
                     groupNodeId, false);
 
-                var newEdgeList = edgeList;
-                //var newEdgeList = self.df.removeEdges(edgeList,
-                //    allChildNodeIds);
-                //newEdgeList = self.df.removeEdges(newEdgeList,
-                //    groupNodeId, allFirstLevelCapIds);
+                var newEdgeList = self.df.removeEdges(edgeList,
+                    groupNodeId, allFirstLevelCapIds);
 
                 renderOrgM(
                     newNodeList,
                     newEdgeList
                 );
-                renderProcMDot(null);
+                // TODO
+                //renderProcMDot(null);
             }
         });
     }
@@ -374,6 +378,7 @@ class Waiter {
                     self.sc.toggleModeCT();
                     self.sc.toggleModeAT();
                     self.sc.toggleModeTT();
+                    self.sc.toggleModeInfo();
 
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);
@@ -390,7 +395,8 @@ class Waiter {
                     .get(modeNodeId).indexOf("dblclick");
 
                 if (status == -1) {
-                    renderProcMDot(null);
+                    // TODO
+                    // renderProcMDot(null);
 
                     //console.log("not clicked. Setting");
                     self.sc.toggleModeTT(modeNodeName);
@@ -418,30 +424,40 @@ class Waiter {
                     // render process model with activity nodes highlighted
                     var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
 
-                    ct = ct == '' ? 'None' : ct;
                     var atsHighlighted = [];
                     for (var childNodeId of childNodeIds) {
                         if (capIds != null && capIds.includes(childNodeId)) {
                             atsHighlighted.push(
-                                self.df.modeTree.parseModeTriple(childNodeId)[1]);
+                                self.df.modeTree.parseModeTriple(childNodeId)[1]
+                            );
                         }
                     }
 
-                    alert("Please wait for process model visualization" +
-                        " to be refreshed.");
                     
-                    var procMTitle = '(' + [ct, x, tt].join(',') + ')';
-                    d3.request('./mine_process_model/' 
-                        + ct + '/' + atsHighlighted.join(','))
-                        .get(function(xhr) {
-                        renderProcMDot(xhr.response, procMTitle);
-                    });
+                    d3.request("/view_process_model") 
+                        .header("Content-Type", "application/json")
+                        .on("progress", function() {
+                            // TODO: toggle the modal for notification
+                            //toggleModal("Preparing process model visualization ...");
+                        })
+                        .on("error", function(error) {
+                            // TODO: toggle the modal for notification
+                        })
+                        .on("load", function(xhr) {
+                            // TODO: toggle the modal for notification
+                            // TODO: toggle the view of process model
+                            //renderProcMDot(xhr.response);
+                        })
+                        .post(JSON.stringify({
+                            "case_type": ct,
+                            "activity_types": atsHighlighted.join(','),
+                        }));
 
-                    // TODO: add request for displaying local diagnostics
                 } else {
                     //console.log("already clicked. Reverting");
                     self.sc.toggleModeTT();
                     self.sc.toggleModeAT();
+                    self.sc.toggleModeInfo();
 
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);
@@ -461,12 +477,72 @@ class Waiter {
                 if (status == -1) {
                     //console.log("not clicked. Setting");
                     self.sc.toggleModeAT(modeNodeName);
+                    self.sc.toggleModeInfo(modeNodeId);
 
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).push("dblclick");
+
+                    var [ct, at, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+
+                    var currentGroup = self.nodeStatusTracker.get("focus");
+                    d3.request("/query_mode_event_number")
+                        .header("Content-Type", "application/json")
+                        .response(function(xhr) {
+                            var respData = JSON.parse(xhr.response);
+
+                            $("#ld-mode-events-num > .score-card-val").text(
+                                respData["mode_event_number"]
+                            );
+                            if (respData.hasOwnProperty("mode_group_event_number")) {
+                                $("#ld-mode-group-events-num > .score-card-val").text(
+                                    respData["mode_group_event_number"]
+                                );
+                            } else {
+                                $("#ld-mode-group-events-num > .score-card-val").text(
+                                    '-'
+                                );
+                            }
+                        })
+                        .post(JSON.stringify({
+                            "case_type": ct,
+                            "activity_type": at,
+                            "time_type": tt,
+                            "group_id": currentGroup == null ?
+                                null : currentGroup.split(delim)[1]
+                        }));
+                    d3.request("/query_local_diagnostic_measures")
+                        .header("Content-Type", "application/json")
+                        .response(function(xhr) {
+                            var respData = JSON.parse(xhr.response);
+                            
+                            $("#ld-relative-focus > .score-card-val").text(
+                                respData["group_relative_focus"].toFixed(3)
+                            );
+                            $("#ld-relative-stake > .score-card-val").text(
+                                respData["group_relative_stake"].toFixed(3)
+                            );
+                            $("#ld-coverage > .score-card-val").text(
+                                respData["group_coverage"].toFixed(3)
+                            );
+                            // TODO: member contribution
+                            /*
+                            $("#canvas-ld-memcontr > .score-card-val").text(
+                                respData["group_member_contribution"]
+                            );
+                            */
+                        })
+                        .post(JSON.stringify({
+                            "case_type": ct,
+                            "activity_type": at,
+                            "time_type": tt,
+                            "group_id": currentGroup == null ?
+                                null : currentGroup.split(delim)[1]
+                        }));
+                            
                 } else {
                     //console.log("already clicked. Reverting");
                     self.sc.toggleModeAT();
+                    self.sc.toggleModeInfo();
 
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);
@@ -506,6 +582,9 @@ class ScoreCard {
             $("#ld-group-cap-num > .score-card-val").text('-');
             $("#ld-group-events-num > .score-card-val").text('-');
             $("#ld-mode-group-events-num > .score-card-val").text('-');
+            $("#ld-relative-focus > .score-card-val").text('-');
+            $("#ld-relative-stake > .score-card-val").text('-');
+            $("#ld-coverage > .score-card-val").text('-');
         } else {
             $("#ld-group-name > .score-card-val").text(
                 self.df.nodeListGroups.get(groupNodeId)["label"]
@@ -516,17 +595,31 @@ class ScoreCard {
             $("#ld-group-cap-num > .score-card-val").text(
                 self.df.getNumCapabilitiesByGroup(groupNodeId)
             );
-            // TODO
-            $("#ld-group-events-num > .score-card-val").text(
-            
-            );
-            $("#ld-mode-group-events-num > .score-card-val").text(
-
-            );
+            d3.request("/query_group_event_number")
+                .header("Content-Type", "application/json")
+                .response(function(xhr) {
+                    $("#ld-group-events-num > .score-card-val").text(
+                        xhr.responseText
+                    );
+                })
+                .post(JSON.stringify({
+                    "group_id": groupNodeId.split(delim)[1]
+                }));
         }
     }
 
-    toggleModeInfo(modeNode) {
+    toggleModeInfo(modeNodeId) {
+        var self = this;
+
+        if (modeNodeId == null) {
+            $("#ld-mode-events-num > .score-card-val").text('-');
+            $("#ld-mode-group-events-num > .score-card-val").text('-');
+            $("#ld-mode-group-num > .score-card-val").text('-');
+        } else {
+            $("#ld-mode-group-num > .score-card-val").text(
+                self.df.getGroupNodeIdsByMode(modeNodeId).length
+            );
+        }
     }
 
     toggleModeCT(typeName) {

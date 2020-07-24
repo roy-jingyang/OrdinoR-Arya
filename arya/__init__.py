@@ -13,7 +13,7 @@ def create_app():
     app.debug = True
     app.config['SECRET_KEY'] = 'orgminer-arya'
     app.config['TEMP'] = os.path.join(os.path.dirname(APP_ROOT), '.tmp/')
-    app.config['ID_DELIMITER'] = '/::/'
+    app.config['ID_DELIMITER'] = '|::|'
 
     bootstrap = Bootstrap(app)
     CORS(app)

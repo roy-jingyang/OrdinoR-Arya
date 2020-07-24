@@ -20,26 +20,13 @@ def index_discover_org_model():
     log_upload_form = LogUploadForm()
 
     if request.method == 'GET':
-        '''
-        if 'user_id' in session and \
-            'last_upload_log_filename' in session:
-            fn_server = session['last_upload_log_filename']
-            try:
-                with open(join(app.config['TEMP'], fn_server), 'r') as f:
-                    if session['last_upload_log_filetype'] == 'csv':
-                        from orgminer.IO.reader import read_disco_csv
-                        el = read_disco_csv(f)
-                    elif session['last_upload_log_filetype'] == 'xes':
-                        from orgminer.IO.reader import read_xes
-                        el = read_xes(f)
-                    else:
-                        pass
-            except FileNotFoundError:
-                return redirect(url_for('.reset'))
-        '''
-        if 'event_log' in session:
+        if 'event_log' in session \
+            and 'last_upload_event_log_name' in session:
             el = session['event_log']
         else:
+            from .index import clear_session_data
+            clear_session_data()
+
             return render_template('discovery.html',
                 has_log=False,
                 log_info=None,
@@ -48,18 +35,13 @@ def index_discover_org_model():
             )
     elif request.method == 'POST':
         if log_upload_form.validate_on_submit():
-            from time import time
-            if 'user_id' not in session:
-                from .utilities import random_id_hex64d
-                session['user_id'] = random_id_hex64d()
-
             from werkzeug.utils import secure_filename
             fn_client = secure_filename(log_upload_form.f_log.data.filename)
             session['last_upload_event_log_name'] = fn_client
             from .utilities import get_file_extension
             file_ext = get_file_extension(fn_client)
 
-            fn_server = '{}.log.{}'.format(session['user_id'], file_ext)
+            fn_server = '{}.log.{}'.format(session.sid, file_ext)
             log_upload_form.f_log.data.save(
                 join(app.config['TEMP'], fn_server)
             )
@@ -79,6 +61,7 @@ def index_discover_org_model():
                     raise TypeError('Invalid event log filetype')
             session['event_log'] = el
         else:
+            print(log_upload_form.errors)
             flash(log_upload_form.errors['f_log'].pop(), 
                 category='warning')
             return redirect(url_for('.index_discover_org_model'))
@@ -122,7 +105,7 @@ def index_discover_org_model():
 def discover_org_model():
     from .forms import DiscoveryConfigForm
     config_form = DiscoveryConfigForm.Form()
-    # disable the choice validation due to it being a dyanmic list
+    # disable the choice validation due to it being a dynamic list
     config_form.param_FullMiner_case_attr_name.validate_choice=False
 
     if config_form.validate_on_submit():
@@ -134,7 +117,7 @@ def discover_org_model():
             DiscoveryConfigForm.parse_form(config_form)
         )
 
-        fn_server_om = '{}.om'.format(session['user_id'])
+        fn_server_om = '{}.om'.format(session.sid)
         fp_server_om = join(app.config['TEMP'], fn_server_om)
         with open(fp_server_om, 'w+') as fout:
             om.to_file_csv(fout) 
@@ -150,38 +133,8 @@ def discover_org_model():
 
 @bp.route('/reset', methods=['GET'])
 def reset():
-    from os import walk, remove
-    from os.path import isfile
-    import re
-    '''
-    fp_server = join(
-        app.config['TEMP'], session['last_upload_log_filename'])
-    if isfile(fp_server):
-        remove(fp_server)
-    else:
-        print('File already removed')
-    '''
-    l_data_files_rm = list()
-    patt = re.compile(session['user_id'])
-    for root, dirs, files in walk(app.config['TEMP']):
-        l_data_files_rm.extend([
-            join(app.config['TEMP'], fn) for fn in files if patt.match(fn)
-        ])
-    for fp in l_data_files_rm:
-        if isfile(fp):
-            remove(fp)
-
-    del session['last_upload_event_log_name']
-    del session['last_upload_event_log_filename']
-    del session['last_upload_event_log_filetype']
-
-    del session['event_log']
-
-    if 'exec_mode_miner' in session:
-        del session['exec_mode_miner']
-    if 'org_model' in session:
-        del session['org_model']
-
+    from .index import clear_session_data
+    clear_session_data()
     return redirect(url_for('.index_discover_org_model'))
 
 
@@ -212,10 +165,6 @@ def _discover_org_model(
     else:
         exec_mode_miner = cls_exec_mode_miner(el, **params)
     rl = exec_mode_miner.derive_resource_log(el)
-    '''
-    with open(path_server_event_log + '.mode_miner', 'w') as f:
-        exec_mode_miner.to_file(f)
-    '''
 
     # Phase 2
     from orgminer.ResourceProfiler.raw_profiler import count_execution_frequency

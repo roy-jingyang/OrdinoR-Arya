@@ -177,17 +177,6 @@
 {% else %}
 {% endif %}
 
-<div class="modal fade" id="modal-wait">
-    <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-        <div class="modal-body mx-auto>
-            <div class="spinner-border spinner-border-sm text-info"></div>
-            <span id="modal-wait-message"></span>
-        </div>
-    </div>
-    </div>
-</div>
-
 </div>
 </div>
 {% endblock %}
@@ -224,16 +213,10 @@
 
         // Others: attach modal dialogs
         $("input.btn[value='Upload']").click(function() {
-            $("#modal-wait-message").text(
-                "Uploading event log ..."
-            )
-            $("#modal-wait").modal();
+            toggleModal("Uploading event log ...")
         });
         $("input.btn[value='Discover model']").click(function() {
-            $("#modal-wait-message").text(
-                "Discovering organizational model ..."
-            )
-            $("#modal-wait").modal();
+            toggleModal("Discovering organizational model ...")
         });
     });
 

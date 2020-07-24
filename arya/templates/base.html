@@ -76,11 +76,34 @@
         </main>
     </div>
 
+    
+    <!-- Popup modal with notification message -->
+    <div class="modal fade" id="modal-wait">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body mx-auto">
+                <div class="spinner-border spinner-border-sm text-info"></div>
+                <span id="modal-wait-message"></span>
+            </div>
+        </div>
+        </div>
+    </div>
 
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS, then base JS -->
     <script src="{{url_for('static', filename='js/jquery-3.5.1.min.js')}}"></script>
     <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
     <script src="{{url_for('static', filename='bootstrap-4.5.0-dist/js/bootstrap.min.js')}}"></script>
+    <script>
+        function toggleModal(msg) {
+            if (msg == null) {
+                $("#modal-wait").modal("hide");
+            } else {
+                $("#modal-wait-message").text(msg);
+                $("#modal-wait").modal("show");
+            }
+        }
+    </script>
     {% block javascript %}{% endblock %}
 
 </body>

@@ -76,7 +76,6 @@
         </div>
         </div>
 
-        <div id="proc-m-title"></div>
         <div class="row">
         <div class="col mx-auto canvas border border-info rounded" 
             id="canvas-proc-m" label="process-model">
@@ -87,9 +86,9 @@
 </div>
 
 <!-- Right panel: for statistics report -->
-<div class="col-lg-4 col-xl-3 text-nowrap">
+<div class="col-lg-4 col-xl-3">
     <!-- Stats of global conformance -->
-    <div class="row my-3">
+    <div class="row my-3 text-nowrap">
     <div class="col">
         <ul class="nav nav-pills small">
             <li class="nav-item">
@@ -161,7 +160,7 @@
             </div>
             </div>
 
-            <div class="row mt-2">
+            <div class="row mt-2 text-nowrap">
             <div class="card-deck mx-auto text-center">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
@@ -190,11 +189,14 @@
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
-                        Originated<br>Events
+                        Executions
                     </div>
                 </div>
             </div>
             </div>
+
+            <!-- This is a cutting line -->
+            <div class="row col-12 border-bottom mt-3 mx-0"></div>
 
             <div class="row mt-3">
             <div class="row col-12 mt-2">
@@ -207,7 +209,7 @@
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
                         bg-light py-0" id="ld-mode-ct">
-                        <h5 class="score-card-val">-</h5>
+                        <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
             </div>
@@ -221,7 +223,7 @@
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
                         bg-light py-0" id="ld-mode-at">
-                        <h5 class="score-card-val">-</h5>
+                        <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
             </div>
@@ -235,18 +237,18 @@
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
                         bg-light py-0" id="ld-mode-tt">
-                        <h5 class="score-card-val">-</h5>
+                        <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
             </div>
             </div>
 
-            <div class="row mt-3">
+            <div class="row mt-3 text-nowrap">
             <div class="card-deck mx-auto text-center">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-mode-events-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -256,7 +258,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-mode-group-events-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -266,7 +268,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-mode-group-num">
-                        <h5 class="score-card-val">0</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -280,12 +282,12 @@
             <div class="row col-12 border-bottom mt-3 mx-0"></div>
 
             <!-- 2. Report local diagnostic measures -->
-            <div class="row mt-3">
+            <div class="row mt-3 text-nowrap">
             <div class="card-deck mx-auto text-center">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-relative-focus">
-                        <h5 class="score-card-val">9.999</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -295,7 +297,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-relative-stake">
-                        <h5 class="score-card-val">9.999</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -305,7 +307,7 @@
                 <div class="card border-0">
                     <div class="card-body font-weight-bold py-1 bg-light"
                         id="ld-coverage">
-                        <h5 class="score-card-val">9.999</h5>
+                        <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0">
@@ -352,7 +354,7 @@
     // retrieve organizational model data
     var orgModelData = {{ data_org_model|tojson }};
 
-    const delim = new String({{ DELIM }});
+    const delim = "{{ DELIM }}";
 
     var df = new DataFactory(orgModelData);
     var sc = new ScoreCard(df);
@@ -363,7 +365,7 @@
         //console.log("Renderer invoked for source:\n" + dotSrcString);
 
         var transition_effect = d3.transition()
-            .duration(500).ease(d3.easeLinear);
+            .duration(200).ease();
 
         d3.select("#canvas-org-m").graphviz().fit(true)
             .transition(transition_effect)
@@ -377,14 +379,13 @@
             });
     }
 
-    function renderProcMDot(dotSrcString, title) {
-        d3.select("div#proc-m-title").text(title);
+    function renderProcMDot(dotSrcString) {
         if (dotSrcString == null) {
             d3.select("#canvas-proc-m").selectAll("svg > *").remove();
         } else {
             console.log("Renderer invoked for process model.");
             var transition_effect = d3.transition()
-                .duration(500).ease(d3.easeLinear);
+                .duration(200).ease();
             
             d3.select("#canvas-proc-m").graphviz().fit(true)
                 .transition(transition_effect)
@@ -404,7 +405,6 @@
     $(".reset-btn").click(function() {
         // do nothing
         var label = $(this).attr("label");
-        alert("TODO: refresh the view of " + label);
     });
 
 

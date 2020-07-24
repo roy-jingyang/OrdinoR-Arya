@@ -14,62 +14,66 @@ DELIM = app.config['ID_DELIMITER']
 # Show a discovered organizational model (and a process model if requested)
 @bp.route('/visualize_demo')
 def visualize_demo():
-    fn = join('demo', 'toy_example.om')
+    from .index import clear_session_data
+    clear_session_data()
+
+    fn_demo_log = join('demo', 'toy_example.xes')
+    fn_demo_om = join('demo', 'toy_example.om')
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    with open(join(APP_STATIC, fn), 'r') as f:
-        demo_om = OrganizationalModel.from_file_csv(f)
+    with open(join(APP_STATIC, fn_demo_log), 'r') as f_log, \
+        open(join(APP_STATIC, fn_demo_om), 'r') as f_om:
+        from orgminer.IO.reader import read_xes
+        session['event_log'] = read_xes(f_log)
+        session['org_model'] = OrganizationalModel.from_file_csv(f_om)
 
-    data_org_model = draw_org_model(demo_om)
-    demo_fitness = 1.0
-    demo_precision = 0.883
-    demo_f1_score= (2 * (demo_fitness * demo_precision) / 
-        (demo_fitness + demo_precision))
+    data_org_model = _draw_org_model(session['org_model'])
 
-    return render_template('visualize.html',
-        DELIM=DELIM,
-        data_org_model=data_org_model,
-        fitness_org_model=demo_fitness, 
-        precision_org_model=demo_precision, 
-        f1_score_org_model=demo_f1_score,
-    )
+    # Hard coding the toy execution mode mining results
+    from orgminer.ExecutionModeMiner.base import BaseMiner
+    exec_mode_miner = BaseMiner(session['event_log'])
+    exec_mode_miner._ctypes['654423'] = 'normal'
+    exec_mode_miner._ctypes['654424'] = 'normal'
+    exec_mode_miner._ctypes['654425'] = 'VIP'
+
+    exec_mode_miner._atypes['register request'] = 'register'
+    exec_mode_miner._atypes['confirm request'] = 'register'
+    exec_mode_miner._atypes['get missing info'] = 'contact'
+    exec_mode_miner._atypes['pay claim'] = 'contact'
+    exec_mode_miner._atypes['check insurance'] = 'check'
+    exec_mode_miner._atypes['accept claim'] = 'decide'
+    exec_mode_miner._atypes['reject claim'] = 'decide'
+
+    exec_mode_miner._ttypes['2018/08/29 15:02:00.000000'] = 'afternoon' 
+    exec_mode_miner._ttypes['2018/08/29 16:28:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/29 16:45:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/30 09:09:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/30 11:32:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/30 11:48:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/29 16:08:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/29 16:12:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/30 09:22:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/30 11:45:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/30 10:07:00.000000'] = 'morning'
+    exec_mode_miner._ttypes['2018/08/30 12:44:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/30 13:32:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/30 14:09:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/30 14:14:00.000000'] = 'afternoon'
+
+    session['exec_mode_miner'] = exec_mode_miner
+
+    return redirect(url_for('.visualize'))
 
 
 @bp.route('/visualize', methods=['GET'])
 def visualize():
     # retrieve organizational model
-    '''
-    fn_om = '{}.om'.format(session['user_id'])
-    fp_om = join(app.config['TEMP'], fn_om)
-    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    with open(fp_om, 'r') as f:
-        om = OrganizationalModel.from_file_csv(f)
-    '''
     om = session['org_model']
     
     # generate visualization data
-    data_org_model = draw_org_model(om)
+    data_org_model = _draw_org_model(om)
 
     # calculate global conformance data
-    '''
-    fp_log = join(app.config['TEMP'], session['last_upload_log_filename'])
-    from orgminer.ExecutionModeMiner.base import BaseMiner 
-    fn_mode_miner = session['last_upload_log_filename'] + '.mode_miner'
-    fp_mode_miner = join(app.config['TEMP'], fn_mode_miner)
-
-    with open(fp_log, 'r') as f_log, \
-        open(fp_mode_miner, 'r') as f_mode_miner:
-        if session['last_upload_log_filetype'] == 'csv':
-            from orgminer.IO.reader import read_disco_csv
-            el = read_disco_csv(f_log)
-        elif session['last_upload_log_filetype'] == 'xes':
-            from orgminer.IO.reader import read_xes
-            el = read_xes(f_log)
-        else:
-            pass
-        exec_mode_miner = BaseMiner.from_file(f_mode_miner)
-        rl = exec_mode_miner.derive_resource_log(el)
-    '''
     el = session['event_log']
     exec_mode_miner = session['exec_mode_miner']
     rl = exec_mode_miner.derive_resource_log(el)
@@ -87,26 +91,103 @@ def visualize():
     )
 
 
-# Discover a process model correspondingly
-@bp.route('/mine_process_model/<case_type>/')
-def handler_mine_process_model(case_type):
-    case_type = None if case_type == 'None' else case_type
-    return discover_draw_process_model(
-        join(app.config['TEMP'], session['last_upload_log_filename']),
-        session['last_upload_log_filetype'],
+# visualize a corresponding process model
+@bp.route('/view_process_model', methods=['POST'])
+def discover_process_model():
+    data = request.get_json()
+    case_type = None if data['case_type'] == '' else data['case_type']
+    activity_types = [] if data['activity_types'] == '' \
+        else data['activity_types'].split(',')
+
+    return _discover_draw_process_model(
+        join(app.config['TEMP'], session['last_upload_event_log_filename']),
+        session['last_upload_event_log_filetype'],
         session['exec_mode_miner'],
-        case_type, [])
+        case_type, activity_types
+    )
 
 
-# Discover a process model correspondingly (with nodes highlighted)
-@bp.route('/mine_process_model/<case_type>/<hl_activity_types>')
-def handler_mine_process_model_with_highlights(case_type, hl_activity_types):
-    case_type = None if case_type == 'None' else case_type
-    return discover_draw_process_model(
-        join(app.config['TEMP'], session['last_upload_log_filename']),
-        session['last_upload_log_filetype'],
-        session['exec_mode_miner'],
-        case_type, hl_activity_types.split(','))
+@bp.route('/query_group_event_number', methods=['POST'])
+def query_group_event_number():
+    group_id = int(request.get_json()['group_id'])
+    el = session['event_log']
+    exec_mode_miner = session['exec_mode_miner']
+    rl = exec_mode_miner.derive_resource_log(el)
+
+    om = session['org_model']
+    group = om.find_group_members(group_id)
+
+    group_event_number = len(rl.loc[rl['resource'].isin(group)])
+    return str(group_event_number)
+
+
+@bp.route('/query_mode_event_number', methods=['POST'])
+def query_mode_event_number():
+    req_params = request.get_json()
+    ct = req_params.get('case_type', None)
+    at = req_params.get('activity_type', None)
+    tt = req_params.get('time_type', None)
+    mode = tuple((ct, at, tt))
+    group_id = req_params.get('group_id', None)
+    group_id = int(group_id) if group_id is not None else None
+
+    el = session['event_log']
+    exec_mode_miner = session['exec_mode_miner']
+    rl = exec_mode_miner.derive_resource_log(el)
+
+    resp = dict()
+    resp['mode_event_number'] = len(rl.groupby([
+        'case_type', 'activity_type', 'time_type']).get_group(mode))
+
+    if group_id is not None:
+        om = session['org_model']
+        group = om.find_group_members(group_id)
+        if mode in om.find_group_execution_modes(group_id):
+            rl = rl.loc[rl['resource'].isin(group)]
+            resp['mode_group_event_number'] = len(rl.groupby([
+                'case_type', 'activity_type', 'time_type']).get_group(mode))
+
+    return json.jsonify(resp)
+
+
+@bp.route('/query_local_diagnostic_measures', methods=['POST'])
+def query_local_diagnostic_measures():
+    req_params = request.get_json()
+
+    group_id = req_params.get('group_id', None)
+    group_id = int(group_id) if group_id is not None else None
+
+    if group_id is not None:
+        ct = req_params.get('case_type', None)
+        at = req_params.get('activity_type', None)
+        tt = req_params.get('time_type', None)
+        mode = tuple((ct, at, tt))
+
+        el = session['event_log']
+        exec_mode_miner = session['exec_mode_miner']
+        rl = exec_mode_miner.derive_resource_log(el)
+
+        om = session['org_model']
+        group = om.find_group_members(group_id)
+
+        if mode in om.find_group_execution_modes(group_id):
+            from orgminer.Evaluation.l2m.diagnostics import (
+                group_relative_focus, group_relative_stake, 
+                group_coverage, group_member_contribution
+            )
+                
+            return json.jsonify({
+                'group_relative_focus': \
+                    group_relative_focus(group, mode, rl),
+                'group_relative_stake': \
+                    group_relative_stake(group, mode, rl),
+                'group_coverage': \
+                    group_coverage(group, mode, rl),
+                'group_member_contribution': \
+                    group_member_contribution(group, mode, rl)
+            })
+
+    return Response(status=204)
 
 
 '''
@@ -114,7 +195,7 @@ Functions
 '''
 from .utilities import _trim_activity_label_tail
 
-def draw_org_model(om):
+def _draw_org_model(om):
     data_dict = dict()
     for og_id, og in om.find_all_groups():
         # groups
@@ -159,11 +240,11 @@ def draw_org_model(om):
     return dumps(data_dict)
 
 
-def discover_draw_process_model(
+def _discover_draw_process_model(
     path_server_event_log, 
     filetype_server_event_log,
     exec_mode_miner,
-    case_type=None, hl_activity_types=None):
+    case_type, hl_activity_types):
     with open(path_server_event_log, 'r') as f:
         if filetype_server_event_log == 'csv':
             # TODO: handle process model discovery for CSV inputs
@@ -176,14 +257,9 @@ def discover_draw_process_model(
         else:
             raise TypeError('Invalid event log filetype')
 
-    '''
-    from orgminer.ExecutionModeMiner.base import BaseMiner
-    with open(path_server_event_log + '.mode_miner', 'r') as f:
-        mode_miner = BaseMiner.from_file(f) 
-    '''
-
     sel_cases = exec_mode_miner.get_values_by_type(case_type) \
-        if case_type is not None else set(el['case_id'])
+        if case_type != '' else set(el['case_id'])
+
     # NOTE: CSV only - trim the additional markings appended by Disco
     '''
     sel_activity_types = [_trim_activity_label_tail(x, r'-complete')
@@ -202,14 +278,11 @@ def discover_draw_process_model(
     dfg = dfg_miner.apply(pm4py_log_filtered)
     from pm4py.visualization.dfg import factory as dfg_vis_factory
     gviz = dfg_vis_factory.apply(dfg, log=pm4py_log_filtered, 
-        variant="frequency", 
+        variant='frequency', 
         parameters={'maxNoOfEdgesInDiagram': 30}
     )
-    print(gviz.source)
-    print('=' * 80)
 
     graph = pgv.AGraph(gviz.source)
-    print(graph)
     for node in graph.nodes():
         if node.attr['shape'] == 'box' and node.attr['label'] != '':
             # trim the count in the labels from DFG
@@ -225,3 +298,4 @@ def discover_draw_process_model(
                 node.attr['fillcolor'] = 'gainsboro'
 
     return graph.string()
+
