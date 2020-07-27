@@ -438,15 +438,25 @@ class Waiter {
                         .header("Content-Type", "application/json")
                         .on("progress", function() {
                             // TODO: toggle the modal for notification
-                            //toggleModal("Preparing process model visualization ...");
+                            toggleModal(
+                                "Process model visualization",
+                                "Please wait for the view to be refreshed ..."
+                            );
                         })
                         .on("error", function(error) {
                             // TODO: toggle the modal for notification
+                            toggleModal(
+                                "Error occured",
+                                "Unable to build process model visualization.",
+                                false
+                            );
                         })
                         .on("load", function(xhr) {
                             // TODO: toggle the modal for notification
                             // TODO: toggle the view of process model
-                            //renderProcMDot(xhr.response);
+                            toggleModal();
+                            console.log(xhr.response);
+                            renderProcMDot(xhr.response);
                         })
                         .post(JSON.stringify({
                             "case_type": ct,

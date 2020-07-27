@@ -213,10 +213,16 @@
 
         // Others: attach modal dialogs
         $("input.btn[value='Upload']").click(function() {
-            toggleModal("Uploading event log ...")
+            toggleModal(
+                "Import event log",
+                "The selected data file is being imported ..."
+            );
         });
         $("input.btn[value='Discover model']").click(function() {
-            toggleModal("Discovering organizational model ...")
+            toggleModal(
+                "Discover organizational model",
+                "Model discovery in progress. Please wait ..."
+            );
         });
     });
 

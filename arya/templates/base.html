@@ -79,12 +79,25 @@
     
     <!-- Popup modal with notification message -->
     <div class="modal fade" id="modal-wait">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-body mx-auto">
-                <div class="spinner-border spinner-border-sm text-info"></div>
-                <span id="modal-wait-message"></span>
+
+            <div class="modal-header">
+                <div class="modal-title mx-auto">
+                    <h6 id="modal-wait-header" 
+                        class="font-weight-bolder text-uppercase">
+                    </h6>
+                </div>
             </div>
+
+            <div class="modal-body mx-auto">
+                <span id="modal-wait-message"></span>
+                <div id="modal-wait-progress" class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+                </div>
+
+            </div>
+
         </div>
         </div>
     </div>
@@ -95,13 +108,17 @@
     <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
     <script src="{{url_for('static', filename='bootstrap-4.5.0-dist/js/bootstrap.min.js')}}"></script>
     <script>
-        function toggleModal(msg) {
-            if (msg == null) {
+        function toggleModal(title, message, inProgress) {
+            if (title == null) {
                 $("#modal-wait").modal("hide");
             } else {
-                $("#modal-wait-message").text(msg);
+                $("#modal-wait-header").text(title);
+                $("#modal-wait-message").text(message);
                 $("#modal-wait").modal("show");
             }
+
+            if (inProgress == false)
+                $("#modal-wait-progress").hide();
         }
     </script>
     {% block javascript %}{% endblock %}

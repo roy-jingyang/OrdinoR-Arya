@@ -41,7 +41,7 @@ def index_discover_org_model():
             from .utilities import get_file_extension
             file_ext = get_file_extension(fn_client)
 
-            fn_server = '{}.log.{}'.format(session.sid, file_ext)
+            fn_server = '{}.log.{}'.format(session.sid[:32], file_ext)
             log_upload_form.f_log.data.save(
                 join(app.config['TEMP'], fn_server)
             )
@@ -61,7 +61,6 @@ def index_discover_org_model():
                     raise TypeError('Invalid event log filetype')
             session['event_log'] = el
         else:
-            print(log_upload_form.errors)
             flash(log_upload_form.errors['f_log'].pop(), 
                 category='warning')
             return redirect(url_for('.index_discover_org_model'))

@@ -18,7 +18,7 @@ def clear_session_data():
     from os.path import isfile
     import re
     l_data_files_rm = list()
-    patt = re.compile(session.sid)
+    patt = re.compile(session.sid[:32])
     for root, dirs, files in walk(app.config['TEMP']):
         l_data_files_rm.extend([
             join(app.config['TEMP'], fn) for fn in files if patt.match(fn)

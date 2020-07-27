@@ -8,6 +8,7 @@
 
 <!-- Left panel: for model visualization -->
 <div class="col-lg-8 col-xl-9">
+    <!-- Organizational model view-->
     <div class="row my-3">
     <div class="col">
         <div class="row shadow-sm">
@@ -46,6 +47,7 @@
     </div>
     </div>
 
+    <!-- Process model view-->
     <div class="row my-3">
     <div class="col">
         <div class="row shadow-sm">
@@ -345,37 +347,48 @@
 <script src="{{url_for('static', filename='js/viz.js')}}"></script>
 <script src="{{url_for('static', filename='js/d3-graphviz.js')}}"></script>
 <script src="{{url_for('static', filename='js/d3-save-svg.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/saveSvgAsPng.js')}}"></script>"
 
 <script src="{{url_for('static', filename='js/arya-data.js')}}"></script>
 <script src="{{url_for('static', filename='js/arya-controller.js')}}"></script>
 
 <script>
-
-    // retrieve organizational model data
+    /* Data import */
     var orgModelData = {{ data_org_model|tojson }};
-
     const delim = "{{ DELIM }}";
 
     var df = new DataFactory(orgModelData);
     var sc = new ScoreCard(df);
     var waiter = new Waiter(df, sc);
 
+    /* d3.js settings */
+    const normal_transition = d3.transition()
+        .duration(400).ease();
+
+   const zoom_behavior = d3.zoom()
+        .scaleExtent([0.6, 3])
+        .on("zoom", function() {
+            d3.select(this).select("g")
+                .attr("transform", d3.event.transform);
+        });
+    
+    /* Graph renderers */
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
         //console.log("Renderer invoked for source:\n" + dotSrcString);
 
-        var transition_effect = d3.transition()
-            .duration(200).ease();
-
         d3.select("#canvas-org-m").graphviz().fit(true)
-            .transition(transition_effect)
+            .transition(normal_transition)
             .engine("dot")
             .renderDot(dotSrcString, function() {
                 waiter.attachSVGListeners(
                     [nodeList, edgeList],
-                    d3.select("#canvas-org-m").select(".graph"));
+                    d3.select("#canvas-org-m").select(".graph")
+                );
 
-                d3.select("div#canvas-org-m > svg").on("dblclick.zoom", null);
+                d3.select("div#canvas-org-m > svg")
+                    .call(zoom_behavior)
+                    .on("dblclick.zoom", null);
             });
     }
 
@@ -383,38 +396,62 @@
         if (dotSrcString == null) {
             d3.select("#canvas-proc-m").selectAll("svg > *").remove();
         } else {
-            console.log("Renderer invoked for process model.");
-            var transition_effect = d3.transition()
-                .duration(200).ease();
-            
+            //console.log("Renderer invoked for process model.");
+
             d3.select("#canvas-proc-m").graphviz().fit(true)
-                .transition(transition_effect)
+                .transition(normal_transition)
                 .engine("dot")
                 .renderDot(dotSrcString, function() {
-                    d3.select("div#canvas-proc-m > svg").on(
-                        "dblclick.zoom", null);
+                    d3.select("div#canvas-proc-m > svg")
+                        .on("dblclick.zoom", null);
                 });
         }
+    }
+
+    /* Graph viewing utility functions */
+    function resetSVGZoom(selection, length) {
+        // selection is a graphviz object
+        if (length == null)
+            selection.resetZoom();
+        else
+            selection.resetZoom(d3.transition().duration(length));
     }
 
     /* Display all group nodes and all first level modes when page loaded. */
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
-    /* TODO: Setup for reset svg zoom. */
     $(".reset-btn").click(function() {
-        // do nothing
-        var label = $(this).attr("label");
+        const label = $(this).attr("label");
+        resetSVGZoom(
+            d3.select(".canvas[label='" + label + "']").graphviz(),
+            750
+        );
     });
 
 
     /* Setup for svg export. */
     $(".export-btn").click(function() {
-        var label = $(this).attr("label");
+        const label = $(this).attr("label");
+        resetSVGZoom(
+            d3.select(".canvas[label='" + label + "']").graphviz()
+        );
+        /*
         d3_save_svg.save(
             d3.select(".canvas[label='" + label + "']")
                 .select("svg").node(), 
             {filename: label});
+        */
+       saveSvgAsPng(
+            d3.select(".canvas[label='" + label + "']")
+                .select("svg").node(), 
+            label + ".png",
+            {
+                "backgroundColor": "white",
+                "encoderOptions": 1.0,
+                "scale": 5.0
+            }
+       );
     });
 
 

@@ -17,8 +17,20 @@ def visualize_demo():
     from .index import clear_session_data
     clear_session_data()
 
+    fn_demo_log = 'toy_example.xes'
+    session['last_upload_event_log_filename'] = fn_demo_log
+    session['last_upload_event_log_filetype'] = 'xes'
+
+    # shorthands (they are filepaths rather)
     fn_demo_log = join('demo', 'toy_example.xes')
     fn_demo_om = join('demo', 'toy_example.om')
+
+    # make a copy of the demo log file
+    from shutil import copyfile
+    copyfile(
+        join(APP_STATIC, fn_demo_log), 
+        join(app.config['TEMP'], '{}.log.xes'.format(session.sid[:32]))
+    )
 
     from orgminer.OrganizationalModelMiner.base import OrganizationalModel
     with open(join(APP_STATIC, fn_demo_log), 'r') as f_log, \
@@ -32,33 +44,33 @@ def visualize_demo():
     # Hard coding the toy execution mode mining results
     from orgminer.ExecutionModeMiner.base import BaseMiner
     exec_mode_miner = BaseMiner(session['event_log'])
-    exec_mode_miner._ctypes['654423'] = 'normal'
-    exec_mode_miner._ctypes['654424'] = 'normal'
-    exec_mode_miner._ctypes['654425'] = 'VIP'
+    exec_mode_miner._ctypes['654423'] = 'CT.normal'
+    exec_mode_miner._ctypes['654424'] = 'CT.normal'
+    exec_mode_miner._ctypes['654425'] = 'CT.VIP'
 
-    exec_mode_miner._atypes['register request'] = 'register'
-    exec_mode_miner._atypes['confirm request'] = 'register'
-    exec_mode_miner._atypes['get missing info'] = 'contact'
-    exec_mode_miner._atypes['pay claim'] = 'contact'
-    exec_mode_miner._atypes['check insurance'] = 'check'
-    exec_mode_miner._atypes['accept claim'] = 'decide'
-    exec_mode_miner._atypes['reject claim'] = 'decide'
+    exec_mode_miner._atypes['register request'] = 'AT.register'
+    exec_mode_miner._atypes['confirm request'] = 'AT.register'
+    exec_mode_miner._atypes['get missing info'] = 'AT.contact'
+    exec_mode_miner._atypes['pay claim'] = 'AT.contact'
+    exec_mode_miner._atypes['check insurance'] = 'AT.check'
+    exec_mode_miner._atypes['accept claim'] = 'AT.decide'
+    exec_mode_miner._atypes['reject claim'] = 'AT.decide'
 
-    exec_mode_miner._ttypes['2018/08/29 15:02:00.000000'] = 'afternoon' 
-    exec_mode_miner._ttypes['2018/08/29 16:28:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/29 16:45:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/30 09:09:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/30 11:32:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/30 11:48:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/29 16:08:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/29 16:12:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/30 09:22:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/30 11:45:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/30 10:07:00.000000'] = 'morning'
-    exec_mode_miner._ttypes['2018/08/30 12:44:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/30 13:32:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/30 14:09:00.000000'] = 'afternoon'
-    exec_mode_miner._ttypes['2018/08/30 14:14:00.000000'] = 'afternoon'
+    exec_mode_miner._ttypes['2018/08/29 15:02:00.000000'] = 'TT.afternoon' 
+    exec_mode_miner._ttypes['2018/08/29 16:28:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/29 16:45:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/30 09:09:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/30 11:32:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/30 11:48:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/29 16:08:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/29 16:12:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/30 09:22:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/30 11:45:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/30 10:07:00.000000'] = 'TT.morning'
+    exec_mode_miner._ttypes['2018/08/30 12:44:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/30 13:32:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/30 14:09:00.000000'] = 'TT.afternoon'
+    exec_mode_miner._ttypes['2018/08/30 14:14:00.000000'] = 'TT.afternoon'
 
     session['exec_mode_miner'] = exec_mode_miner
 
@@ -94,17 +106,17 @@ def visualize():
 # visualize a corresponding process model
 @bp.route('/view_process_model', methods=['POST'])
 def discover_process_model():
-    data = request.get_json()
-    case_type = None if data['case_type'] == '' else data['case_type']
-    activity_types = [] if data['activity_types'] == '' \
-        else data['activity_types'].split(',')
+    req_params = request.get_json()
+    case_type = None if req_params['case_type'] == '' \
+        else req_params['case_type']
+    activity_types = [] if req_params['activity_types'] == '' \
+        else req_params['activity_types'].split(',')
 
-    return _discover_draw_process_model(
-        join(app.config['TEMP'], session['last_upload_event_log_filename']),
-        session['last_upload_event_log_filetype'],
-        session['exec_mode_miner'],
+    data_proc_model = _discover_draw_process_model(
         case_type, activity_types
     )
+
+    return data_proc_model
 
 
 @bp.route('/query_group_event_number', methods=['POST'])
@@ -240,23 +252,19 @@ def _draw_org_model(om):
     return dumps(data_dict)
 
 
-def _discover_draw_process_model(
-    path_server_event_log, 
-    filetype_server_event_log,
-    exec_mode_miner,
-    case_type, hl_activity_types):
-    with open(path_server_event_log, 'r') as f:
-        if filetype_server_event_log == 'csv':
-            # TODO: handle process model discovery for CSV inputs
-            return None
-        elif filetype_server_event_log == 'xes':
-            from orgminer.IO.reader import read_xes
-            el = read_xes(f)
-            from pm4py.objects.log.importer.xes import factory
-            pm4py_log = factory.apply(path_server_event_log)
-        else:
-            raise TypeError('Invalid event log filetype')
+# TODO: fix demo model highlighting
+def _discover_draw_process_model(case_type, hl_activity_types):
+    # TODO: handle process model discovery for CSV inputs
+    el = session['event_log']
+    fn_server = '{}.log.{}'.format(
+        session.sid[:32], session['last_upload_event_log_filetype']
+    )
+    from pm4py.objects.log.importer.xes import importer as xes_importer
+    pm4py_log = xes_importer.apply(join(
+        app.config['TEMP'], fn_server
+    ))
 
+    exec_mode_miner = session['exec_mode_miner']
     sel_cases = exec_mode_miner.get_values_by_type(case_type) \
         if case_type != '' else set(el['case_id'])
 
