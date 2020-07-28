@@ -315,6 +315,7 @@ class Waiter {
                     newEdgeList
                 );
                 renderProcM();
+                renderLDMemContr();
             }
         });
     }
