@@ -7,7 +7,7 @@
 <div class="row">
 
 <!-- Left panel: for model visualization -->
-<div class="col-lg-8 col-xl-9">
+<div class="col-lg-8 col-xl-9 mh-100">
     <!-- Organizational model view-->
     <div class="row my-3">
     <div class="col">
@@ -32,7 +32,7 @@
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white export-btn"
                         label="organizational-model">
-                        Export SVG
+                        Export view
                     </a>
                 </li>
             </ul>
@@ -40,7 +40,8 @@
         </div>
 
         <div class="row">
-        <div class="col mx-auto canvas border border-info rounded shadow" 
+        <div class="col mx-auto canvas border border-info rounded 
+            text-center shadow" 
             id="canvas-org-m" label="organizational-model">
         </div>
         </div>
@@ -71,7 +72,7 @@
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white export-btn"
                         label="process-model">
-                        Export SVG
+                        Export view
                     </a>
                 </li>
             </ul>
@@ -79,7 +80,8 @@
         </div>
 
         <div class="row">
-        <div class="col mx-auto canvas border border-info rounded" 
+        <div class="col mx-auto canvas border border-info rounded 
+            text-center shadow" 
             id="canvas-proc-m" label="process-model">
         </div>
         </div>
@@ -324,9 +326,8 @@
                     small text-secondary text-center border-0 bg-light">
                     Member Contribution
                 </div>
-                <div class="col-12 mx-auto border border-warning" 
+                <div class="col-12 mx-auto text-center"
                     id="canvas-ld-memcontr">
-                    (This is a canvas for plotting the bar chart)
                 </div>
             </div>
 
@@ -347,7 +348,7 @@
 <script src="{{url_for('static', filename='js/viz.js')}}"></script>
 <script src="{{url_for('static', filename='js/d3-graphviz.js')}}"></script>
 <script src="{{url_for('static', filename='js/d3-save-svg.min.js')}}"></script>
-<script src="{{url_for('static', filename='js/saveSvgAsPng.js')}}"></script>"
+<script src="{{url_for('static', filename='js/saveSvgAsPng.js')}}"></script>
 
 <script src="{{url_for('static', filename='js/arya-data.js')}}"></script>
 <script src="{{url_for('static', filename='js/arya-controller.js')}}"></script>
@@ -363,48 +364,110 @@
 
     /* d3.js settings */
     const normal_transition = d3.transition()
-        .duration(400).ease();
+        .duration(500).ease();
 
-   const zoom_behavior = d3.zoom()
-        .scaleExtent([0.6, 3])
-        .on("zoom", function() {
-            d3.select(this).select("g")
-                .attr("transform", d3.event.transform);
-        });
-    
     /* Graph renderers */
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
         //console.log("Renderer invoked for source:\n" + dotSrcString);
 
-        d3.select("#canvas-org-m").graphviz().fit(true)
+        const renderOptions = {
+            "engine": "dot",
+            "width": $("#canvas-org-m").width() * 0.9,
+            "scale": 1.0,
+            "zoomScaleExtent": [0.5, 3]
+        };
+        d3.select("#canvas-org-m").graphviz(renderOptions)
             .transition(normal_transition)
-            .engine("dot")
             .renderDot(dotSrcString, function() {
                 waiter.attachSVGListeners(
                     [nodeList, edgeList],
                     d3.select("#canvas-org-m").select(".graph")
                 );
-
+                
+                // post-rendering config
                 d3.select("div#canvas-org-m > svg")
-                    .call(zoom_behavior)
                     .on("dblclick.zoom", null);
             });
     }
 
-    function renderProcMDot(dotSrcString) {
+    function renderProcM(dotSrcString) {
         if (dotSrcString == null) {
-            d3.select("#canvas-proc-m").selectAll("svg > *").remove();
+            d3.select("#canvas-proc-m").selectAll("svg").remove();
         } else {
             //console.log("Renderer invoked for process model.");
 
-            d3.select("#canvas-proc-m").graphviz().fit(true)
+            const renderOptions = {
+                "engine": "dot",
+                "width": $("#canvas-proc-m").width() * 0.9,
+                "scale": 1.0,
+                "zoomScaleExtent": [0.5, 3]
+            };
+            d3.select("#canvas-proc-m").graphviz(renderOptions)
                 .transition(normal_transition)
-                .engine("dot")
                 .renderDot(dotSrcString, function() {
+                    // post-rendering config
                     d3.select("div#canvas-proc-m > svg")
                         .on("dblclick.zoom", null);
                 });
+        }
+    }
+
+    function renderLDMemContr(data) {
+        if (data == null) {
+            d3.select("#canvas-ld-memcontr").selectAll("svg").remove();
+        } else {
+            // set the bar chart layout
+            const margin = {top: 25, right: 25, bottom: 45, left: 40};
+            const width = (
+                Math.floor($("#canvas-ld-memcontr").width() * 0.9)
+                - margin["left"] - margin["right"]);
+            const height = (Math.floor(width * 0.75)
+                - margin["top"] - margin["bottom"]);
+
+            var svg = d3.select("#canvas-ld-memcontr")
+                .append("svg")
+                    .attr("width", width + margin["left"] + margin["right"])
+                    .attr("height", height + margin["top"] + margin["bottom"])
+                .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+            
+            // set axes
+            var data = Object.entries(data).sort(function(a, b) {
+                return b[1] - a[1];
+            });
+
+            var x = d3.scaleBand()
+                .domain(data.map(function(d) { return d[0]; }))
+                .range([0, width])
+                .round(true)
+                .padding(0.1);
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")") 
+                .call(d3.axisBottom(x));
+            
+            var y = d3.scaleLinear()
+                .domain([0, 1.0])
+                .range([height, 0]);
+            svg.append("g")
+                .call(
+                    d3.axisLeft(y).ticks(5).tickFormat(function(d) {
+                        return d * 100 + "%";
+                    })
+                );
+
+            svg.selectAll("mybar")
+                .data(data)
+                .enter()
+                .append("rect")
+                    .attr("x", function(d) { return x(d[0]); })
+                    .attr("y", function(d) { return y(d[1]); })
+                    .attr("width", x.bandwidth())
+                    .attr("height", function(d) { 
+                        return height - y(d[1]); 
+                    })
+                    .style("fill", "gold");
         }
     }
 

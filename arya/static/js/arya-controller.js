@@ -314,8 +314,7 @@ class Waiter {
                     newNodeList,
                     newEdgeList
                 );
-                // TODO
-                //renderProcMDot(null);
+                renderProcM();
             }
         });
     }
@@ -388,6 +387,8 @@ class Waiter {
                         self.df.removeEdges(edgeList,
                             self.df.modeTree.getChildNodes(modeNodeId, true))
                     );
+                    renderProcM();
+                    renderLDMemContr();
                 }
             } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 2) {
                 // dblclick on second level execution modes
@@ -395,9 +396,6 @@ class Waiter {
                     .get(modeNodeId).indexOf("dblclick");
 
                 if (status == -1) {
-                    // TODO
-                    // renderProcMDot(null);
-
                     //console.log("not clicked. Setting");
                     self.sc.toggleModeTT(modeNodeName);
 
@@ -421,7 +419,8 @@ class Waiter {
                         edgeList.concat(newEdges)
                     );
 
-                    // render process model with activity nodes highlighted
+                    // render process model with activity highlighted
+                    renderProcM();
                     var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
 
                     var atsHighlighted = [];
@@ -433,30 +432,30 @@ class Waiter {
                         }
                     }
 
+                    // TODO: toggle the modal for notification
+                    /*
+                    toggleModal(
+                        "Process model visualization",
+                        "Please wait for the view to be refreshed ..."
+                    );
+                    */
                     
                     d3.request("/view_process_model") 
                         .header("Content-Type", "application/json")
-                        .on("progress", function() {
-                            // TODO: toggle the modal for notification
-                            toggleModal(
-                                "Process model visualization",
-                                "Please wait for the view to be refreshed ..."
-                            );
-                        })
                         .on("error", function(error) {
                             // TODO: toggle the modal for notification
+                            /*
                             toggleModal(
                                 "Error occured",
                                 "Unable to build process model visualization.",
                                 false
                             );
+                            */
                         })
                         .on("load", function(xhr) {
                             // TODO: toggle the modal for notification
-                            // TODO: toggle the view of process model
-                            toggleModal();
-                            console.log(xhr.response);
-                            renderProcMDot(xhr.response);
+                            /*toggleModal();*/
+                            renderProcM(xhr.response);
                         })
                         .post(JSON.stringify({
                             "case_type": ct,
@@ -477,6 +476,8 @@ class Waiter {
                         self.df.removeEdges(edgeList,
                             self.df.modeTree.getChildNodes(modeNodeId, true))
                     );
+                    renderProcM();
+                    renderLDMemContr();
                 }
 
             } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 3) {
@@ -534,12 +535,9 @@ class Waiter {
                             $("#ld-coverage > .score-card-val").text(
                                 respData["group_coverage"].toFixed(3)
                             );
-                            // TODO: member contribution
-                            /*
-                            $("#canvas-ld-memcontr > .score-card-val").text(
+                            renderLDMemContr(
                                 respData["group_member_contribution"]
                             );
-                            */
                         })
                         .post(JSON.stringify({
                             "case_type": ct,
@@ -551,8 +549,8 @@ class Waiter {
                             
                 } else {
                     //console.log("already clicked. Reverting");
-                    self.sc.toggleModeAT();
-                    self.sc.toggleModeInfo();
+                    //self.sc.toggleModeAT();
+                    //self.sc.toggleModeInfo();
 
                     self.nodeStatusTracker.get("modes")
                         .get(modeNodeId).splice(status, 1);

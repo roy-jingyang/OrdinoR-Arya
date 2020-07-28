@@ -111,7 +111,7 @@ def discover_process_model():
         else req_params['case_type']
     activity_types = [] if req_params['activity_types'] == '' \
         else req_params['activity_types'].split(',')
-
+    
     data_proc_model = _discover_draw_process_model(
         case_type, activity_types
     )
@@ -297,7 +297,10 @@ def _discover_draw_process_model(case_type, hl_activity_types):
             node.attr['label'] = _trim_activity_label_tail(
                 node.attr['label'], r' \(\d+\)')
             node.attr['fontname'] = 'Helvetica'
-            if ('AT.' + node.attr['label']) in sel_activity_types:
+
+            # TODO: NOT an elegant solution for highlighting purpose - need rev.
+            if exec_mode_miner._atypes[node.attr['label']] \
+                in sel_activity_types:
                 # highlight
                 node.attr['style'] = 'bold'
                 node.attr['fontcolor'] = 'red3'

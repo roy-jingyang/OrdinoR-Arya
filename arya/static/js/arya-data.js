@@ -515,12 +515,12 @@ class DataFactory {
             
             string += '\t' + nodeType + "_invis" + ' [style=invis];\n';
             for (var node of nodeList) {
-                string += '\t"' + new String(node[0]) + '"';
+                string += '\t"' + node[0] + '"';
                 string += ' [';
                 for (const attr in node[1]) {
                     if (attr[0] != '_') {
-                        string += new String(attr) + '=';
-                        string += '"' + new String(node[1][attr]) + '",';
+                        string += attr + '=';
+                        string += '"' + node[1][attr] + '",';
                     } else {
                         // specific style for highlighted nodes
                         switch (attr) {
@@ -553,19 +553,20 @@ class DataFactory {
             const v = edge[0][1];
 
             var string = (
-                '"' + new String(u) + '"' + 
+                '"' + u + '"' + 
                 " -- " +
-                '"' + new String(v)) + '"';
+                '"' + v + '"'
+            );
 
             string += ' [';
             for (const attr in edge[1]) {
                 if (attr[0] != '_') {
                     if (attr == "contribution")
                         //string += "label" + '=';
-                        string += new String(attr) + '=';
+                        string += attr + '=';
                     else
-                        string += new String(attr) + '=';
-                    string += '"' + new String(edge[1][attr]) + '",';
+                        string += attr + '=';
+                    string += '"' + edge[1][attr] + '",';
                 } else {
                     // do nothing
                 }

@@ -1,12 +1,8 @@
-.toggle-content {
-  display: none;
-}
-
-.toggle-content.is-visible {
-  display: block;
-}
-
 /*--------------------------------------------------------------------*/
+/* Change default height */
+body {
+  max-height: initial;
+}
 
 /* Change default caption style of BS4 */
 caption {
@@ -14,22 +10,3 @@ caption {
 }
 
 /*--------------------------------------------------------------------*/
-div#canvas-org-m svg {
-  width: 100%;
-  height: 100%;
-}
-
-div#canvas-proc-m svg {
-  width: 100%;
-  height: 100%;
-}
-
-div#proc-m-title {
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 120%;
-}
-
-form.config {
-  font-family: Helvetica, Arial, sans-serif;
-}
-
