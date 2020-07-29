@@ -104,16 +104,18 @@ def visualize():
 
 
 # visualize a corresponding process model
-@bp.route('/view_process_model', methods=['POST'])
+@bp.route('/visualize_process_model', methods=['POST'])
 def discover_process_model():
     req_params = request.get_json()
     case_type = None if req_params['case_type'] == '' \
         else req_params['case_type']
     activity_types = [] if req_params['activity_types'] == '' \
         else req_params['activity_types'].split(',')
+    time_type = None if req_params['time_type'] == '' \
+        else req_params['time_type']
     
     data_proc_model = _discover_draw_process_model(
-        case_type, activity_types
+        case_type, activity_types, time_type
     )
 
     return data_proc_model
@@ -252,8 +254,8 @@ def _draw_org_model(om):
     return dumps(data_dict)
 
 
-# TODO: fix demo model highlighting
-def _discover_draw_process_model(case_type, hl_activity_types):
+def _discover_draw_process_model(
+    case_type, hl_activity_types, time_type):
     # TODO: handle process model discovery for CSV inputs
     el = session['event_log']
     fn_server = '{}.log.{}'.format(
@@ -278,6 +280,7 @@ def _discover_draw_process_model(case_type, hl_activity_types):
     # filter event log
     from pm4py.objects.log.log import EventLog, Trace
     pm4py_log_filtered = EventLog()
+    # filter event log: keep selected cases only
     for trace in pm4py_log:
         if trace.attributes['concept:name'] in sel_cases:
             pm4py_log_filtered.append(trace)

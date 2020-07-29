@@ -7,9 +7,9 @@
 <div class="row">
 
 <!-- Left panel: for model visualization -->
-<div class="col-lg-8 col-xl-9 mh-100">
+<div class="col-lg-8 col-xl-9">
     <!-- Organizational model view-->
-    <div class="row my-3">
+    <div class="row my-3" id="view-org-m">
     <div class="col">
         <div class="row shadow-sm">
         <div class="col-4 px-0">
@@ -24,6 +24,18 @@
         <div class="col-8 px-0">
             <ul class="nav nav-pills small float-right">
                 <li class="nav-item ml-2">
+                    <div class="nav-link custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input"
+                        id="switch-view-proc-m">
+                    <label class="custom-control-label"
+                        for="switch-view-proc-m">
+                        Toggle process model view
+                    </label>
+                    </div>
+                </li>
+                <li class="nav-item ml-2">
+                </li>
+                <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white reset-btn"
                         label="organizational-model">
                         Reset view
@@ -32,7 +44,7 @@
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white export-btn"
                         label="organizational-model">
-                        Export view
+                        Export
                     </a>
                 </li>
             </ul>
@@ -49,7 +61,7 @@
     </div>
 
     <!-- Process model view-->
-    <div class="row my-3">
+    <div class="row my-3 collapse" id="view-proc-m">
     <div class="col">
         <div class="row shadow-sm">
         <div class="col-4 px-0">
@@ -72,7 +84,7 @@
                 <li class="nav-item ml-2">
                     <a class="nav-link bg-secondary text-white export-btn"
                         label="process-model">
-                        Export view
+                        Export
                     </a>
                 </li>
             </ul>
@@ -326,7 +338,7 @@
                     small text-secondary text-center border-0 bg-light">
                     Member Contribution
                 </div>
-                <div class="col-12 mx-auto text-center"
+                <div class="col-12 mx-auto text-center small"
                     id="canvas-ld-memcontr">
                 </div>
             </div>
@@ -373,7 +385,7 @@
 
         const renderOptions = {
             "engine": "dot",
-            "width": $("#canvas-org-m").width() * 0.9,
+            "width": $("#canvas-org-m").width(),
             "scale": 1.0,
             "zoomScaleExtent": [0.5, 3]
         };
@@ -399,7 +411,7 @@
 
             const renderOptions = {
                 "engine": "dot",
-                "width": $("#canvas-proc-m").width() * 0.9,
+                "width": $("#canvas-proc-m").width(),
                 "scale": 1.0,
                 "zoomScaleExtent": [0.5, 3]
             };
@@ -414,11 +426,10 @@
     }
 
     function renderLDMemContr(data) {
-        if (data == null) {
-            d3.select("#canvas-ld-memcontr").selectAll("svg").remove();
-        } else {
+        d3.select("#canvas-ld-memcontr").selectAll("svg").remove();
+        if (data != null) {
             // set the bar chart layout
-            const margin = {top: 25, right: 25, bottom: 45, left: 40};
+            const margin = {top: 25, right: 25, bottom: 75, left: 40};
             const width = (
                 Math.floor($("#canvas-ld-memcontr").width() * 0.9)
                 - margin["left"] - margin["right"]);
@@ -445,19 +456,21 @@
                 .padding(0.1);
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")") 
-                .call(d3.axisBottom(x));
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("dx", -1 * x.bandwidth() / 2)
+                    .attr("transform", "rotate(-45)");
             
             var y = d3.scaleLinear()
                 .domain([0, 1.0])
                 .range([height, 0]);
             svg.append("g")
                 .call(
-                    d3.axisLeft(y).ticks(5).tickFormat(function(d) {
-                        return d * 100 + "%";
-                    })
+                    d3.axisLeft(y).ticks(5).tickFormat(d3.format(".0%"))
                 );
 
-            svg.selectAll("mybar")
+            svg.selectAll(".bar")
                 .data(data)
                 .enter()
                 .append("rect")
@@ -468,6 +481,21 @@
                         return height - y(d[1]); 
                     })
                     .style("fill", "gold");
+            svg.selectAll(".label")
+                .data(data)
+                .enter()
+                .append("text")
+                    .attr("class", "bartext")
+                    .text(function(d) { return d3.format(".1%")(d[1]); })
+                    .attr("x", function(d) { return x(d[0]); })
+                    .attr("y", function(d) { return y(d[1]); })
+                    .attr("dx", "0.2em")
+                    .attr("dy", x.bandwidth() / 2)
+                    .style("font-size", "0.8em")
+                    .style("text-anchor", "start")
+                    .attr("transform", function(d) {
+                        return `rotate(-90,${x(d[0])},${y(d[1])})`;
+                    });
         }
     }
 
@@ -484,6 +512,7 @@
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
+    /* UI Setup */
     $(".reset-btn").click(function() {
         const label = $(this).attr("label");
         resetSVGZoom(
@@ -493,7 +522,6 @@
     });
 
 
-    /* Setup for svg export. */
     $(".export-btn").click(function() {
         const label = $(this).attr("label");
         resetSVGZoom(
@@ -515,6 +543,10 @@
                 "scale": 5.0
             }
        );
+    });
+
+    $("#switch-view-proc-m").click(function() {
+        $("#view-proc-m").collapse("toggle");
     });
 
 

@@ -256,6 +256,9 @@ class DataFactory {
     }
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
+        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+            return [];
+        }
         const caps = Array.from(
             this.edgeListGroupsModes.get(groupNodeId).keys());
         var firstLevelCapIds = new Set();
@@ -272,6 +275,9 @@ class DataFactory {
     }
 
     getNumCapabilitiesByGroup(groupNodeId) {
+        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+            return 0;
+        }
         const caps = Array.from(
             this.edgeListGroupsModes.get(groupNodeId).keys());
         return caps.length;

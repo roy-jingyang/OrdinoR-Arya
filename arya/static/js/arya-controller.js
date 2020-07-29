@@ -433,18 +433,12 @@ class Waiter {
                         }
                     }
 
-                    // TODO: toggle the modal for notification
-                    /*
-                    toggleModal(
-                        "Process model visualization",
-                        "Please wait for the view to be refreshed ..."
-                    );
-                    */
-                    
-                    d3.request("/view_process_model") 
+                    d3.request("/visualize_process_model") 
                         .header("Content-Type", "application/json")
                         .on("error", function(error) {
                             // TODO: toggle the modal for notification
+                            console.log("error occured when visualize" +
+                                "process model");
                             /*
                             toggleModal(
                                 "Error occured",
@@ -454,13 +448,12 @@ class Waiter {
                             */
                         })
                         .on("load", function(xhr) {
-                            // TODO: toggle the modal for notification
-                            /*toggleModal();*/
                             renderProcM(xhr.response);
                         })
                         .post(JSON.stringify({
                             "case_type": ct,
                             "activity_types": atsHighlighted.join(','),
+                            "time_type": tt
                         }));
 
                 } else {
