@@ -8,8 +8,11 @@ bp = Blueprint('index', __name__)
 @bp.route('/', methods=['GET'])
 def index():
     # Default: the session will be deleted when the browser closes
-    # TODO: redirecting to discovery before more entries are added
-    return redirect(url_for('discovery.index'))
+    if app.demo:
+        return redirect(url_for('visualization.visualize_demo'))
+    else:
+        # TODO: redirecting to discovery before more entries are added
+        return redirect(url_for('discovery.index'))
 
 '''Functions
 '''

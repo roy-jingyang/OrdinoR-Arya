@@ -9,7 +9,8 @@ app = Flask(__name__)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 APP_STATIC = os.path.join(APP_ROOT, app.static_folder)
 
-def create_app():
+def create_app(demo=False):
+    app.demo = demo
     app.debug = True
     app.config['SECRET_KEY'] = 'orgminer-arya'
     app.config['TEMP'] = os.path.join(os.path.dirname(APP_ROOT), '.tmp/')
@@ -24,15 +25,27 @@ def create_app():
     Session(app)
 
     # register blueprints of routes
-    from . import index, discovery, visualization
+    from . import index, visualization
     app.register_blueprint(index.bp)
-    app.register_blueprint(discovery.bp)
     app.register_blueprint(visualization.bp)
+    # if not demo mode, present configuration interfaces
+    if not demo:
+        from . import discovery
+        app.register_blueprint(discovery.bp)
+    else:
+        print('NOTE: [OrgMiner-Arya started as demo-only]')
+
+    app.url_build_error_handlers.append(url_build_error_handler_null)
 
     return app
 
 
-# HTTP error page
+# extra application configuration
+def url_build_error_handler_null(error, endpoint, values):
+    return '#'
+
+
+# HTTP error pages
 from flask import render_template
 @app.errorhandler(404) 
 # inbuilt function which takes error as parameter 
