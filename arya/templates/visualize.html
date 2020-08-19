@@ -403,7 +403,7 @@
             });
     }
 
-    function renderProcM(dotSrcString) {
+    function renderProcM(dotSrcString, highlights) {
         if (dotSrcString == null) {
             d3.select("#canvas-proc-m").selectAll("svg").remove();
         } else {
@@ -417,6 +417,7 @@
             };
             d3.select("#canvas-proc-m").graphviz(renderOptions)
                 .transition(normal_transition)
+                // TODO: highlight particular nodes (when specified)
                 .renderDot(dotSrcString, function() {
                     // post-rendering config
                     d3.select("div#canvas-proc-m > svg")

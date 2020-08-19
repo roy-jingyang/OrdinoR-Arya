@@ -448,7 +448,11 @@ class Waiter {
                             */
                         })
                         .on("load", function(xhr) {
-                            renderProcM(xhr.response);
+                            var respData = JSON.parse(xhr.response);
+                            renderProcM(
+                                respData["dotsrc"],
+                                respData["hl_activities"]
+                            );
                         })
                         .post(JSON.stringify({
                             "case_type": ct,

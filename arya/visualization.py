@@ -1,5 +1,4 @@
 from flask import *
-import pygraphviz as pgv
 
 import sys
 from os.path import join
@@ -114,11 +113,15 @@ def discover_process_model():
     time_type = None if req_params['time_type'] == '' \
         else req_params['time_type']
     
-    data_proc_model = _discover_draw_process_model(
+    dotsrc_proc_model, hl_activities = _discover_draw_process_model(
         case_type, activity_types, time_type
     )
 
-    return data_proc_model
+    resp = dict()
+    resp['dotsrc'] = dotsrc_proc_model
+    resp['hl_activities'] = hl_activities
+
+    return json.jsonify(resp)
 
 
 @bp.route('/query_group_event_number', methods=['POST'])
@@ -207,8 +210,6 @@ def query_local_diagnostic_measures():
 '''
 Functions
 '''
-from .utilities import _trim_activity_label_tail
-
 def _draw_org_model(om):
     data_dict = dict()
     for og_id, og in om.find_all_groups():
@@ -256,6 +257,8 @@ def _draw_org_model(om):
 
 def _discover_draw_process_model(
     case_type, hl_activity_types, time_type):
+    from .utilities import _trim_activity_label_tail
+
     # TODO: handle process model discovery for CSV inputs
     el = session['event_log']
     fn_server = '{}.log.{}'.format(
@@ -270,12 +273,11 @@ def _discover_draw_process_model(
     sel_cases = exec_mode_miner.get_values_by_type(case_type) \
         if case_type != '' else set(el['case_id'])
 
-    # NOTE: CSV only - trim the additional markings appended by Disco
     '''
-    sel_activity_types = [_trim_activity_label_tail(x, r'-complete')
+    # NOTE: CSV only - trim the additional markings appended by Disco
+    hl_activity_types = [_trim_activity_label_tail(x, r'-complete')
         for x in hl_activity_types]
     '''
-    sel_activity_types = hl_activity_types
 
     # filter event log
     from pm4py.objects.log.log import EventLog, Trace
@@ -292,7 +294,15 @@ def _discover_draw_process_model(
         variant='frequency', 
         parameters={'maxNoOfEdgesInDiagram': 30}
     )
+    gv_source = gviz.source
 
+    # find activity labels that should be highlighted
+    hl_activities = []
+    for at in hl_activity_types:
+        hl_activities.extend(exec_mode_miner.get_values_by_type(at))
+
+    # TODO: delegate to front-end: edit and annotate the graph
+    import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)
     for node in graph.nodes():
         if node.attr['shape'] == 'box' and node.attr['label'] != '':
@@ -303,7 +313,7 @@ def _discover_draw_process_model(
 
             # TODO: NOT an elegant solution for highlighting purpose - need rev.
             if exec_mode_miner._atypes[node.attr['label']] \
-                in sel_activity_types:
+                in hl_activity_types:
                 # highlight
                 node.attr['style'] = 'bold'
                 node.attr['fontcolor'] = 'red3'
@@ -311,5 +321,5 @@ def _discover_draw_process_model(
                 node.attr['style'] = 'filled'
                 node.attr['fillcolor'] = 'gainsboro'
 
-    return graph.string()
-
+    gv_source = graph.string()
+    return gv_source, hl_activities
