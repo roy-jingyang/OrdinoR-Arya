@@ -88,6 +88,8 @@
                         class="font-weight-bolder text-uppercase">
                     </h6>
                 </div>
+                <button type="button" class="close"
+                    data-dismiss="modal">&times;</button>
             </div>
 
             <div class="modal-body mx-auto">
@@ -118,7 +120,7 @@
 
                 $("#modal-wait-header").text(title);
                 $("#modal-wait-message").text(message);
-                $("#modal-wait").modal({backdrop: "static"});
+                $("#modal-wait").modal();
             }
 
         }
