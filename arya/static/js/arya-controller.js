@@ -442,8 +442,7 @@ class Waiter {
                             /*
                             toggleModal(
                                 "Error occured",
-                                "Unable to build process model visualization.",
-                                false
+                                "Unable to build process model visualization."
                             );
                             */
                         })

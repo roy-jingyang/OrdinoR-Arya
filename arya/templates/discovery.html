@@ -215,13 +215,15 @@
         $("input.btn[value='Upload']").click(function() {
             toggleModal(
                 "Import event log",
-                "The selected data file is being imported ..."
+                "The selected data file is being imported ...",
+                true
             );
         });
         $("input.btn[value='Discover model']").click(function() {
             toggleModal(
                 "Discover organizational model",
-                "Model discovery in progress. Please wait ..."
+                "Model discovery in progress. Please wait ...",
+                true
             );
         });
     });

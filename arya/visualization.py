@@ -16,6 +16,7 @@ def visualize_demo():
     from .index import clear_session_data
     clear_session_data()
 
+    session['demo'] = True
     fn_demo_log = 'toy_example.xes'
     session['last_upload_event_log_filename'] = fn_demo_log
     session['last_upload_event_log_filetype'] = 'xes'

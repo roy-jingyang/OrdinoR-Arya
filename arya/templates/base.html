@@ -88,14 +88,13 @@
                         class="font-weight-bolder text-uppercase">
                     </h6>
                 </div>
-                <button type="button" class="close"
-                    data-dismiss="modal">&times;</button>
             </div>
 
             <div class="modal-body mx-auto">
                 <span id="modal-wait-message"></span>
                 <div id="modal-wait-progress" class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+                    <div class="progress-bar progress-bar-striped
+                    progress-bar-animated" style="width:100%"></div>
                 </div>
 
             </div>
@@ -115,11 +114,13 @@
             if (title == null) {
                 $("#modal-wait").modal("toggle");
             } else {
-                if (inProgress == false)
+                if (inProgress === true)
+                    $("#modal-wait-progress").show();
+                else
                     $("#modal-wait-progress").hide();
 
                 $("#modal-wait-header").text(title);
-                $("#modal-wait-message").text(message);
+                $("#modal-wait-message").html(message);
                 $("#modal-wait").modal();
             }
 

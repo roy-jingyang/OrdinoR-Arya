@@ -6,6 +6,14 @@
 <!-- Outer row-->
 <div class="row">
 
+{% if session['demo'] == True %}
+<div class="small w-100 alert alert-info fade show" role="alert">
+    You are viewing a toy example. Click 
+    <span id="show-toy-log"><a href="#">here</a></kbd>
+    to show the corresponding toy event log used as input.
+</div>
+{% endif %}
+
 <!-- Left panel: for model visualization -->
 <div class="col-lg-8 col-xl-9">
     <!-- Organizational model view-->
@@ -564,6 +572,15 @@
 
     $("#switch-view-proc-m").click(function() {
         $("#view-proc-m").collapse("toggle");
+    });
+
+    $("#show-toy-log").click(function() {
+        toggleModal(
+            "toy event log", 
+            `{{ session["event_log"].to_html(
+                columns=['case_id', 'activity', 'resource', 'timestamp'])
+                |safe }}`
+        )
     });
 
 
