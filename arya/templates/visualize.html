@@ -575,11 +575,18 @@
     });
 
     $("#show-toy-log").click(function() {
+        var logDF = $.parseHTML(
+            `<div>{{ session["event_log"].to_html(
+                columns=['case_id', 'activity', 'resource', 'timestamp']
+                )|safe }}
+            </div>`
+        );
+        $(logDF).find("table").addClass(
+            ["table-striped", "table-bordered", "small", "text-center"]
+        );
         toggleModal(
             "toy event log", 
-            `{{ session["event_log"].to_html(
-                columns=['case_id', 'activity', 'resource', 'timestamp'])
-                |safe }}`
+            $(logDF).html()
         )
     });
 
