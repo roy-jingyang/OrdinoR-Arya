@@ -2,6 +2,7 @@
 /* Change default height */
 body {
   max-height: initial;
+  max-width: initial;
 }
 
 /* Change default caption style of BS4 */

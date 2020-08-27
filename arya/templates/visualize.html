@@ -2,7 +2,6 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block main %}
-<div class="container-fluid">
 <!-- Outer row-->
 <div class="row">
 
@@ -184,8 +183,7 @@
             </div>
             </div>
 
-            <div class="row mt-2 text-nowrap">
-            <div class="card-deck mx-auto text-center">
+            <div class="card-deck mx-auto text-center text-nowrap mt-2">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
                         id="ld-group-mem-num">
@@ -217,7 +215,6 @@
                     </div>
                 </div>
             </div>
-            </div>
 
             <!-- This is a cutting line -->
             <div class="row col-12 border-bottom mt-3 mx-0"></div>
@@ -225,7 +222,7 @@
             <div class="row mt-3">
             <div class="row col-12 mt-2">
                 <div class="col-3">
-                    <div class="card-footer text-secondary text-left
+                    <div class="card-footer text-secondary text-right
                         bg-light border-0 py-0 px-0 small">
                         Case<br>Type
                     </div>
@@ -239,36 +236,35 @@
             </div>
             <div class="row col-12 mt-2">
                 <div class="col-3">
-                    <div class="card-footer text-secondary text-left
+                    <div class="card-footer text-secondary text-right
                         bg-light border-0 py-0 px-0 small">
                         Activity<br>Type
                     </div>
                 </div>
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
-                        bg-light py-0 px-0" id="ld-mode-ct">
+                        bg-light py-0 px-0" id="ld-mode-at">
                         <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
             </div>
             <div class="row col-12 mt-2">
                 <div class="col-3">
-                    <div class="card-footer text-secondary text-left
+                    <div class="card-footer text-secondary text-right
                         bg-light border-0 py-0 px-0 small">
                         Time<br>Type
                     </div>
                 </div>
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
-                        bg-light py-0 px-0" id="ld-mode-ct">
+                        bg-light py-0 px-0" id="ld-mode-tt">
                         <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
             </div>
             </div>
 
-            <div class="row mt-3 text-nowrap">
-            <div class="card-deck mx-auto text-center">
+            <div class="card-deck mx-auto text-center text-nowrap mt-3">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
                         id="ld-mode-events-num">
@@ -300,14 +296,12 @@
                     </div>
                 </div>
             </div>
-            </div>
 
             <!-- This is a cutting line -->
             <div class="row col-12 border-bottom mt-3 mx-0"></div>
 
             <!-- 2. Report local diagnostic measures -->
-            <div class="row mt-3 text-nowrap">
-            <div class="card-deck mx-auto text-center">
+            <div class="card-deck mx-auto text-center text-nowrap mt-3">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
                         id="ld-relative-focus">
@@ -339,7 +333,6 @@
                     </div>
                 </div>
             </div>
-            </div>
 
             <div class="row mt-3">
                 <div class="col-12 mx-auto card-footer 
@@ -358,8 +351,6 @@
 </div>
 
 <!-- End of outer row -->
-</div>
-<!-- End of container -->
 </div>
 {% endblock %}
 
