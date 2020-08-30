@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XES version 1.0 -->
+<!-- Created by Fluxicon Disco (http://fluxicon.com/disco/ -->
+<!-- (c) 2017 Fluxicon - http://fluxicon.com/ -->
+<log xes.version="1.0" xmlns="http://www.xes-standard.org" xes.creator="Fluxicon Disco">
+	<extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+	<extension name="Lifecycle" prefix="lifecycle" uri="http://www.xes-standard.org/lifecycle.xesext"/>
+	<extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+	<extension name="Organizational" prefix="org" uri="http://www.xes-standard.org/org.xesext"/>
+	<global scope="trace">
+		<string key="concept:name" value="name"/>
+		<string key="variant" value="string"/>
+		<int key="variant-index" value="0"/>
+	</global>
+	<global scope="event">
+		<string key="concept:name" value="name"/>
+		<string key="lifecycle:transition" value="transition"/>
+		<string key="org:resource" value="resource"/>
+		<date key="time:timestamp" value="2020-02-01T18:04:49.042+10:00"/>
+		<string key="Column_2" value="string"/>
+		<string key="Column_4" value="string"/>
+		<string key="Column_5" value="string"/>
+	</global>
+	<classifier name="Activity" keys="Column_2"/>
+	<classifier name="Resource" keys="Column_4"/>
+	<string key="lifecycle:model" value="standard"/>
+	<string key="creator" value="Fluxicon Disco"/>
+	<string key="library" value="Fluxicon Octane"/>
+	<trace>
+		<string key="concept:name" value="654423"/>
+		<string key="variant" value="Variant 1"/>
+		<int key="variant-index" value="1"/>
+		<string key="creator" value="Fluxicon Disco"/>
+		<event>
+			<string key="concept:name" value="register request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Pete"/>
+			<date key="time:timestamp" value="2018-08-29T15:02:00.000+10:00"/>
+			<string key="Column_2" value="register request"/>
+			<string key="Column_4" value="Pete"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="get missing info"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Ann"/>
+			<date key="time:timestamp" value="2018-08-29T16:28:00.000+10:00"/>
+			<string key="Column_2" value="get missing info"/>
+			<string key="Column_4" value="Ann"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="confirm request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value=""/>
+			<date key="time:timestamp" value="2018-08-29T16:45:00.000+10:00"/>
+			<string key="Column_2" value="confirm request"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="check insurance"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="John"/>
+			<date key="time:timestamp" value="2018-08-30T09:09:00.000+10:00"/>
+			<string key="Column_2" value="check insurance"/>
+			<string key="Column_4" value="John"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="accept claim"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="John"/>
+			<date key="time:timestamp" value="2018-08-30T11:32:00.000+10:00"/>
+			<string key="Column_2" value="accept claim"/>
+			<string key="Column_4" value="John"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="pay claim"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value=""/>
+			<date key="time:timestamp" value="2018-08-30T11:48:00.000+10:00"/>
+			<string key="Column_2" value="pay claim"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+	</trace>
+	<trace>
+		<string key="concept:name" value="654424"/>
+		<string key="variant" value="Variant 2"/>
+		<int key="variant-index" value="2"/>
+		<string key="creator" value="Fluxicon Disco"/>
+		<event>
+			<string key="concept:name" value="register request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Pete"/>
+			<date key="time:timestamp" value="2018-08-29T16:08:00.000+10:00"/>
+			<string key="Column_2" value="register request"/>
+			<string key="Column_4" value="Pete"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="confirm request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value=""/>
+			<date key="time:timestamp" value="2018-08-29T16:12:00.000+10:00"/>
+			<string key="Column_2" value="confirm request"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="check insurance"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Sue"/>
+			<date key="time:timestamp" value="2018-08-30T09:22:00.000+10:00"/>
+			<string key="Column_2" value="check insurance"/>
+			<string key="Column_4" value="Sue"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+		<event>
+			<string key="concept:name" value="reject claim"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Sue"/>
+			<date key="time:timestamp" value="2018-08-30T11:45:00.000+10:00"/>
+			<string key="Column_2" value="reject claim"/>
+			<string key="Column_4" value="Sue"/>
+			<string key="Column_5" value="normal"/>
+		</event>
+	</trace>
+	<trace>
+		<string key="concept:name" value="654425"/>
+		<string key="variant" value="Variant 3"/>
+		<int key="variant-index" value="3"/>
+		<string key="creator" value="Fluxicon Disco"/>
+		<event>
+			<string key="concept:name" value="register request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Bob"/>
+			<date key="time:timestamp" value="2018-08-30T10:07:00.000+10:00"/>
+			<string key="Column_2" value="register request"/>
+			<string key="Column_4" value="Bob"/>
+			<string key="Column_5" value="VIP"/>
+		</event>
+		<event>
+			<string key="concept:name" value="confirm request"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value=""/>
+			<date key="time:timestamp" value="2018-08-30T12:44:00.000+10:00"/>
+			<string key="Column_2" value="confirm request"/>
+			<string key="Column_5" value="VIP"/>
+		</event>
+		<event>
+			<string key="concept:name" value="check insurance"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Mary"/>
+			<date key="time:timestamp" value="2018-08-30T13:32:00.000+10:00"/>
+			<string key="Column_2" value="check insurance"/>
+			<string key="Column_4" value="Mary"/>
+			<string key="Column_5" value="VIP"/>
+		</event>
+		<event>
+			<string key="concept:name" value="accept claim"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value="Mary"/>
+			<date key="time:timestamp" value="2018-08-30T14:09:00.000+10:00"/>
+			<string key="Column_2" value="accept claim"/>
+			<string key="Column_4" value="Mary"/>
+			<string key="Column_5" value="VIP"/>
+		</event>
+		<event>
+			<string key="concept:name" value="pay claim"/>
+			<string key="lifecycle:transition" value="complete"/>
+			<string key="org:resource" value=""/>
+			<date key="time:timestamp" value="2018-08-30T14:14:00.000+10:00"/>
+			<string key="Column_2" value="pay claim"/>
+			<string key="Column_5" value="VIP"/>
+		</event>
+	</trace>
+</log>

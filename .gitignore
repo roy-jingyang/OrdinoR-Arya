@@ -9,10 +9,6 @@
 # Ignore VSCode config files
 .vscode/*
 
-# Ignore data files
-*.xes
-*.csv
-
 # Ignore tmp files
 .tmp/*
 
