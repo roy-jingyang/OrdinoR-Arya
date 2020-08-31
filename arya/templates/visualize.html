@@ -532,7 +532,7 @@
     $(".reset-btn").click(function() {
         const label = $(this).attr("label");
         resetSVGZoom(
-            d3.select(".canvas[label='" + label + "']").graphviz(),
+            d3.select(".svg-container[label='" + label + "']").graphviz(),
             750
         );
     });
@@ -541,16 +541,16 @@
     $(".export-btn").click(function() {
         const label = $(this).attr("label");
         resetSVGZoom(
-            d3.select(".canvas[label='" + label + "']").graphviz()
+            d3.select(".svg-container[label='" + label + "']").graphviz()
         );
         /*
         d3_save_svg.save(
-            d3.select(".canvas[label='" + label + "']")
+            d3.select(".svg-container[label='" + label + "']")
                 .select("svg").node(), 
             {filename: label});
         */
        saveSvgAsPng(
-            d3.select(".canvas[label='" + label + "']")
+            d3.select(".svg-container[label='" + label + "']")
                 .select("svg").node(), 
             label + ".png",
             {
