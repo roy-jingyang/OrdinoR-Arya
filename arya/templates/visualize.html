@@ -1,110 +1,591 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
+{% import "bootstrap/wtf.html" as wtf %}
 
-<head>
-    <title> Arya </title>
-    <link rel="stylesheet" type="text/css" href="../static/css/arya.css">
-</head>
+{% block main %}
+<!-- Outer row-->
+<div class="row">
 
-<body>
-    <h3> Project Arya </h2>
-    <h5 style="font-style: italic"> Visualize an organizational model </h4>
+{% if session['demo'] == True %}
+<div class="small w-100 alert alert-info fade show" role="alert">
+    You are viewing a toy example. Click 
+    <span id="show-toy-log"><a href="#">here</a></kbd>
+    to show the corresponding toy event log used as input.
+</div>
+{% endif %}
 
-    <div id="container">
-        Canvas for plotting an organizational model.
-        <div id="canvas-org-m">
-            <!-- <button id="reset-org-m-vis" label="organizational-model" 
-                type="button" class="reset-btn"> Reset view </button> -->
-            <button id="export-org-m-vis" label="organizational-model" 
-                type="button" class="export-btn"> Export SVG </button>
+<!-- Left panel: for model visualization -->
+<div class="col-9">
+    <!-- Organizational model view-->
+    <div class="row my-3" id="view-org-m">
+    <div class="col">
+        <div class="row shadow-sm">
+        <div class="col-4 px-0">
+            <ul class="nav nav-pills small">
+                <li class="nav-item">
+                    <a class="nav-link bg-info text-white active">
+                        Organizational model view
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-8 px-0">
+            <ul class="nav nav-pills small float-right">
+                <li class="nav-item ml-2">
+                    <div class="nav-link custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input"
+                        id="switch-view-proc-m">
+                    <label class="custom-control-label"
+                        for="switch-view-proc-m">
+                        Toggle process model view
+                    </label>
+                    </div>
+                </li>
+                <li class="nav-item ml-2">
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white reset-btn"
+                        label="organizational-model">
+                        Reset view
+                    </a>
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white export-btn"
+                        label="organizational-model">
+                        Export
+                    </a>
+                </li>
+            </ul>
+        </div>
         </div>
 
-        Canvas for plotting a process model of:
-        <div id="proc-m-title"></div>
-        <div id="canvas-proc-m">
-            <!-- <button id="reset-proc-m-vis" label="process-model"
-                type="button" class="reset-btn"> Reset view </button> -->
-            <button id="export-proc-m-vis" label="process-model"
-                type="button" class="export-btn"> Export SVG </button>
+        <div class="row">
+        <div class="col mx-auto svg-container border border-info rounded 
+            text-center shadow" 
+            id="canvas-org-m" label="organizational-model">
+        </div>
         </div>
     </div>
-</body>
+    </div>
 
-<script src="../static/javascript/d3.v4.min.js"></script>
-<script src="../static/javascript/viz.js"></script>
-<script src="../static/javascript/d3-graphviz.js"></script>
-<script src="../static/javascript/jquery-3.4.1.min.js"></script>
-<script src="../static/javascript/d3-save-svg.min.js"></script>
+    <!-- Process model view-->
+    <div class="row my-3 collapse" id="view-proc-m">
+    <div class="col">
+        <div class="row shadow-sm">
+        <div class="col-4 px-0">
+            <ul class="nav nav-pills small">
+                <li class="nav-item">
+                    <a class="nav-link bg-info text-white active">
+                        Process model view
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-8 px-0">
+            <ul class="nav nav-pills small float-right">
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white reset-btn"
+                        label="process-model">
+                        Reset view
+                    </a>
+                </li>
+                <li class="nav-item ml-2">
+                    <a class="nav-link bg-secondary text-white export-btn"
+                        label="process-model">
+                        Export
+                    </a>
+                </li>
+            </ul>
+        </div>
+        </div>
 
-<script src="../static/javascript/arya.data.js"></script>
-<script src="../static/javascript/arya.controller.js"></script>
+        <div class="row">
+        <div class="col mx-auto svg-container border border-info rounded 
+            text-center shadow" 
+            id="canvas-proc-m" label="process-model">
+        </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<!-- Right panel: for statistics report -->
+<div class="col-3">
+    <!-- Stats of global conformance -->
+    <div class="row my-3 text-nowrap">
+    <div class="col">
+        <ul class="nav nav-pills small">
+            <li class="nav-item">
+                <a class="nav-link bg-info text-white active">
+                    Global Conformance
+                </a>
+            </li>
+        </ul>
+
+        <div class="border border-info rounded py-2 bg-light">
+            <div class="card-deck mx-auto text-center">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(fitness_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Fitness
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(precision_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Precision
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0">
+                        <h5 class="score-card-val">
+                            {{ '{:.3f}'.format(f1_score_org_model) }}
+                        </h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        F1-score
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Stats of local diagnostics -->
+    <div class="row my-3">
+    <div class="col">
+        <ul class="nav nav-pills small">
+            <li class="nav-item">
+                <a class="nav-link bg-info text-white active">
+                    Local Diagnostics
+                </a>
+            </li>
+        </ul>
+
+        <div class="border border-info rounded py-2 bg-light container">
+            <!-- 1. Report basic statistics -->
+            <div class="row mt-2">
+            <div class="card mx-auto text-center border-0">
+                <div class="card-body font-weight-bold bg-light py-1 px-0"
+                    id="ld-group-name">
+                    <h5 class="score-card-val">-</h5>
+                </div>
+            </div>
+            </div>
+
+            <div class="card-deck mx-auto text-center text-nowrap mt-2">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-group-mem-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Members
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-group-cap-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Capabilities
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-group-events-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Executions
+                    </div>
+                </div>
+            </div>
+
+            <!-- This is a cutting line -->
+            <div class="row col-12 border-bottom mt-3 mx-0"></div>
+
+            <div class="row mt-3">
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-right
+                        bg-light border-0 py-0 px-0 small">
+                        Case<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0 px-0" id="ld-mode-ct">
+                        <h6 class="score-card-val">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-right
+                        bg-light border-0 py-0 px-0 small">
+                        Activity<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0 px-0" id="ld-mode-at">
+                        <h6 class="score-card-val">-</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-12 mt-2">
+                <div class="col-3">
+                    <div class="card-footer text-secondary text-right
+                        bg-light border-0 py-0 px-0 small">
+                        Time<br>Type
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="card-body font-weight-bold text-left
+                        bg-light py-0 px-0" id="ld-mode-tt">
+                        <h6 class="score-card-val">-</h6>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="card-deck mx-auto text-center text-nowrap mt-3">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-mode-events-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Executions<br>(total)
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-mode-group-events-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Executions<br>(this group)
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-mode-group-num">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Groups<br>(capable)
+                    </div>
+                </div>
+            </div>
+
+            <!-- This is a cutting line -->
+            <div class="row col-12 border-bottom mt-3 mx-0"></div>
+
+            <!-- 2. Report local diagnostic measures -->
+            <div class="card-deck mx-auto text-center text-nowrap mt-3">
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-relative-focus">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Relative<br>focus
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-relative-stake">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Relative<br>Stake
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div class="card-body font-weight-bold bg-light py-1 px-0"
+                        id="ld-coverage">
+                        <h5 class="score-card-val">-</h5>
+                    </div>
+                    <div class="card-footer small text-secondary 
+                    border-0 py-0 px-0">
+                        Coverage
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12 mx-auto card-footer 
+                    small text-secondary text-center border-0 bg-light">
+                    Member Contribution
+                </div>
+                <div class="col-12 mx-auto svg-container text-center small"
+                    id="canvas-ld-memcontr">
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+
+</div>
+
+<!-- End of outer row -->
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script src="{{url_for('static', filename='js/d3.v4.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/viz.js')}}"></script>
+<script src="{{url_for('static', filename='js/d3-graphviz.js')}}"></script>
+<script src="{{url_for('static', filename='js/d3-save-svg.min.js')}}"></script>
+<script src="{{url_for('static', filename='js/saveSvgAsPng.js')}}"></script>
+
+<script src="{{url_for('static', filename='js/arya-data.js')}}"></script>
+<script src="{{url_for('static', filename='js/arya-controller.js')}}"></script>
 
 <script>
-
-    // retrieve organizational model data
+    /* Data import */
     var orgModelData = {{ data_org_model|tojson }};
-
-    const delim = '/::/'; // NOTE: must define for data exchange
+    const delim = "{{ DELIM }}";
 
     var df = new DataFactory(orgModelData);
-    var waiter = new Waiter(df);
+    var sc = new ScoreCard(df);
+    var waiter = new Waiter(df, sc);
 
+    /* d3.js settings */
+    const normal_transition = d3.transition()
+        .duration(500).ease();
+
+    /* Graph renderers */
     function renderOrgM(nodeList, edgeList) {
         var dotSrcString = df.compileDotString(nodeList, edgeList);
         //console.log("Renderer invoked for source:\n" + dotSrcString);
 
-        var transition_effect = d3.transition()
-            .duration(500).ease(d3.easeLinear);
-
-        d3.select("#canvas-org-m").graphviz().fit(true)
-            .transition(transition_effect)
-            .engine("dot")
+        const renderOptions = {
+            "engine": "dot",
+            "width": $("#canvas-org-m").width(),
+            "scale": 1.0,
+            "zoomScaleExtent": [0.5, 3]
+        };
+        d3.select("#canvas-org-m").graphviz(renderOptions)
+            .transition(normal_transition)
             .renderDot(dotSrcString, function() {
                 waiter.attachSVGListeners(
                     [nodeList, edgeList],
-                    d3.select("#canvas-org-m").select(".graph"));
-
-                d3.select("div#canvas-org-m > svg").on("dblclick.zoom", null);
+                    d3.select("#canvas-org-m").select(".graph")
+                );
+                
+                // post-rendering config
+                d3.select("div#canvas-org-m > svg")
+                    .on("dblclick.zoom", null);
             });
     }
 
-    function renderProcMDot(dotSrcString, title) {
-        d3.select("div#proc-m-title").text(title);
+    function renderProcM(dotSrcString, highlights) {
         if (dotSrcString == null) {
-            d3.select("#canvas-proc-m").selectAll("svg > *").remove();
+            d3.select("#canvas-proc-m").selectAll("svg").remove();
         } else {
-            console.log("Renderer invoked for process model.");
-            var transition_effect = d3.transition()
-                .duration(500).ease(d3.easeLinear);
-            
-            d3.select("#canvas-proc-m").graphviz().fit(true)
-                .transition(transition_effect)
-                .engine("dot")
+            //console.log("Renderer invoked for process model.");
+
+            const renderOptions = {
+                "engine": "dot",
+                "width": $("#canvas-proc-m").width(),
+                "scale": 1.0,
+                "zoomScaleExtent": [0.5, 3]
+            };
+            d3.select("#canvas-proc-m").graphviz(renderOptions)
+                .transition(normal_transition)
+                // TODO: highlight particular nodes (when specified)
                 .renderDot(dotSrcString, function() {
-                    d3.select("div#canvas-proc-m > svg").on(
-                        "dblclick.zoom", null);
+                    // post-rendering config
+                    d3.select("div#canvas-proc-m > svg")
+                        .on("dblclick.zoom", null);
                 });
         }
+    }
+
+    function renderLDMemContr(data) {
+        d3.select("#canvas-ld-memcontr").selectAll("svg").remove();
+        if (data != null) {
+            // set the bar chart layout
+            const margin = {top: 25, right: 25, bottom: 40, left: 80};
+            const width = (
+                Math.floor($("#canvas-ld-memcontr").width() * 0.9)
+                - margin["left"] - margin["right"]);
+            const height = (
+                Math.max(
+                    width * 0.5,
+                    Object.keys(data).length * 20
+                )
+                - margin["top"] - margin["bottom"]
+            );
+
+            var svg = d3.select("#canvas-ld-memcontr")
+                .append("svg")
+                    .attr("width", width + margin["left"] + margin["right"])
+                    .attr("height", height + margin["top"] + margin["bottom"])
+                .append("g")
+                    .attr("transform",
+                        "translate(" + margin.left + "," + margin.top + ")");
+            
+            var data = Object.entries(data).sort(function(a, b) {
+                return b[1] - a[1];
+            });
+
+           // Add X axis: member contribution values
+            var x = d3.scaleLinear()
+                .domain([0, 1.0])
+                .range([0, width]);
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(
+                    d3.axisBottom(x)
+                        .tickValues([0, 0.25, 0.50, 0.75, 1.0])
+                        .tickFormat(d3.format(".0%"))
+                )
+                .selectAll("text")
+                    .attr("transform", "translate(-10,0)rotate(-45)")
+                    .style("text-anchor", "end");
+
+            // Y axis: resource labels
+            var y = d3.scaleBand()
+                .range([0, height])
+                .domain(data.map(function(d) { return d[0]; }))
+                .padding(.1);
+            svg.append("g")
+                .call(d3.axisLeft(y))
+                .selectAll("text")
+                    .style("font-weight", "bold");
+
+            /*
+            // Y axis (2): resource member contribution values
+            var y2 = d3.scaleBand()
+                .range([0, height])
+                .domain(data.map(function(d) { return d[1]; }))
+                .padding(.1);
+            svg.append("g")
+                .attr("transform", "translate(" + width + " ,0)")	
+                .call(d3.axisRight(y2).tickFormat(d3.format(".0%")))
+                .selectAll("text")
+                    .style("font-weight", "bold");
+            */
+
+            // Bars
+            svg.selectAll("myRect")
+                .data(data)
+                .enter()
+                .append("rect")
+                    .attr("x", x(0) )
+                    .attr("y", function(d) { return y(d[0]); })
+                    .attr("width", function(d) { return x(d[1]); })
+                    .attr("height", y.bandwidth())
+                    .attr("fill", "gold")
+                    .attr("stroke", "grey")
+                    .attr("stroke-width", "1");
+            svg.selectAll("label")
+                .data(data)
+                .enter()
+                .append("text")
+                    .attr("class", "bartext")
+                    .text(function(d) { 
+                        return (d[1] == '0' ? '': d3.format(".0%")(d[1])); 
+                    })
+                    .attr("x", function(d) { return x(d[1]); })
+                    .attr("y", function(d) { return y(d[0]); })
+                    .attr("dy", y.bandwidth() / 2)
+                    .style("font-size", "0.75em")
+                    .style("font-weight", "bold");
+
+        }
+    }
+
+    /* Graph viewing utility functions */
+    function resetSVGZoom(selection, length) {
+        // selection is a graphviz object
+        if (length == null)
+            selection.resetZoom();
+        else
+            selection.resetZoom(d3.transition().duration(length));
     }
 
     /* Display all group nodes and all first level modes when page loaded. */
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
-    /* TODO: Setup for reset svg zoom. */
-    d3.selectAll(".reset-btn").on("click", function() {
-        // do nothing
+    /* UI Setup */
+    $(".reset-btn").click(function() {
+        const label = $(this).attr("label");
+        resetSVGZoom(
+            d3.select(".svg-container[label='" + label + "']").graphviz(),
+            750
+        );
     });
 
 
-    /* Setup for svg export. */
-    d3.selectAll(".export-btn").on("click", function() {
-        d3_save_svg.save(d3.select(this.parentNode).select("svg").node(), 
-            {filename: this.getAttribute("label")});
+    $(".export-btn").click(function() {
+        const label = $(this).attr("label");
+        resetSVGZoom(
+            d3.select(".svg-container[label='" + label + "']").graphviz()
+        );
+        /*
+        d3_save_svg.save(
+            d3.select(".svg-container[label='" + label + "']")
+                .select("svg").node(), 
+            {filename: label});
+        */
+       saveSvgAsPng(
+            d3.select(".svg-container[label='" + label + "']")
+                .select("svg").node(), 
+            label + ".png",
+            {
+                "backgroundColor": "white",
+                "encoderOptions": 1.0,
+                "scale": 5.0
+            }
+       );
+    });
+
+    $("#switch-view-proc-m").click(function() {
+        $("#view-proc-m").collapse("toggle");
+    });
+
+    $("#show-toy-log").click(function() {
+        var logDF = $.parseHTML(
+            `<div>{{ session["event_log"].to_html(
+                columns=['case_id', 'activity', 'resource', 'timestamp']
+                )|safe }}
+            </div>`
+        );
+        $(logDF).find("table").addClass(
+            ["table-striped", "table-bordered", "small", "text-center"]
+        );
+        toggleModal(
+            "toy event log", 
+            $(logDF).html()
+        )
     });
 
 
 </script>
-
-</html>
-
+{% endblock %}

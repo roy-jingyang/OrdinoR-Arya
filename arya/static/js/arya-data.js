@@ -256,6 +256,9 @@ class DataFactory {
     }
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
+        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+            return [];
+        }
         const caps = Array.from(
             this.edgeListGroupsModes.get(groupNodeId).keys());
         var firstLevelCapIds = new Set();
@@ -269,6 +272,15 @@ class DataFactory {
         firstLevelCapIds = Array.from(firstLevelCapIds);
         secondLevelCapIds = Array.from(secondLevelCapIds);
         return (caps.concat(firstLevelCapIds, secondLevelCapIds)).sort();
+    }
+
+    getNumCapabilitiesByGroup(groupNodeId) {
+        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+            return 0;
+        }
+        const caps = Array.from(
+            this.edgeListGroupsModes.get(groupNodeId).keys());
+        return caps.length;
     }
 
     getGroupNodeIdsByResource(resourceNodeId) {
@@ -386,18 +398,22 @@ class DataFactory {
                 throw new Error("Cannot determine edges with two parameters" +
                     " being lists at the same time.");
             } else if (Array.isArray(nodeUId)) {
+                //console.log("1: only isArray(nodeUId)");
+                var edgesToFiltered = [];
+                for (var nodeId of nodeUId) {
+                    // both nodeId, nodeVId refer to nodes
+                    edgesToFiltered.push([nodeVId, nodeId].sort()
+                        .join(" -- "));
+                }
                 return edgeList.filter(function(value, index, array) {
-                    var isEdgeInvolved = false;
-                    for (var nodeId of nodeUId) {
-                        isEdgeInvolved = (
-                            value[0].sort().join(" -- ") == 
-                            [nodeUId, nodeId].sort().join(" -- "));
-                    }
-                    return !isEdgeInvolved;
+                    return !edgesToFiltered
+                        .includes(value[0].sort().join(" -- "));
                 });
             } else if (Array.isArray(nodeVId)) {
-                return removeEdges(edgeList, nodeVId, nodeUId);
+                //console.log("2: only isArray(nodeVId)");
+                return this.removeEdges(edgeList, nodeVId, nodeUId);
             } else {
+                //console.log("3: neither is an Array");
                 return edgeList.filter(function(value, index, array) {
                     return (
                         value[0].sort().join(" -- ") != 
@@ -505,12 +521,12 @@ class DataFactory {
             
             string += '\t' + nodeType + "_invis" + ' [style=invis];\n';
             for (var node of nodeList) {
-                string += '\t"' + new String(node[0]) + '"';
+                string += '\t"' + node[0] + '"';
                 string += ' [';
                 for (const attr in node[1]) {
                     if (attr[0] != '_') {
-                        string += new String(attr) + '=';
-                        string += '"' + new String(node[1][attr]) + '",';
+                        string += attr + '=';
+                        string += '"' + node[1][attr] + '",';
                     } else {
                         // specific style for highlighted nodes
                         switch (attr) {
@@ -543,19 +559,20 @@ class DataFactory {
             const v = edge[0][1];
 
             var string = (
-                '"' + new String(u) + '"' + 
+                '"' + u + '"' + 
                 " -- " +
-                '"' + new String(v)) + '"';
+                '"' + v + '"'
+            );
 
             string += ' [';
             for (const attr in edge[1]) {
                 if (attr[0] != '_') {
                     if (attr == "contribution")
                         //string += "label" + '=';
-                        string += new String(attr) + '=';
+                        string += attr + '=';
                     else
-                        string += new String(attr) + '=';
-                    string += '"' + new String(edge[1][attr]) + '",';
+                        string += attr + '=';
+                    string += '"' + edge[1][attr] + '",';
                 } else {
                     // do nothing
                 }

@@ -1,4 +1,4 @@
-0,Bob;Pete,VIP|register|morning;normal|register|afternoon
-1,John;Sue,normal|check|morning;normal|decide|morning
-2,Mary,VIP|check|afternoon;VIP|decide|afternoon
-3,Ann,normal|contact|afternoon
+0,Bob;Pete,CT.VIP|AT.register|TT.morning;CT.normal|AT.register|TT.afternoon
+1,John;Sue,CT.normal|AT.check|TT.morning;CT.normal|AT.decide|TT.morning
+2,Mary,CT.VIP|AT.check|TT.afternoon;CT.VIP|AT.decide|TT.afternoon
+3,Ann,CT.normal|AT.contact|TT.afternoon

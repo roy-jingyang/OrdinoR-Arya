@@ -1,74 +1,13 @@
-.toggle-content {
-  display: none;
+/*--------------------------------------------------------------------*/
+/* Change default height */
+body {
+  max-height: initial;
+  max-width: initial;
 }
 
-.toggle-content.is-visible {
-  display: block;
+/* Change default caption style of BS4 */
+caption {
+  caption-side: top;
 }
 
 /*--------------------------------------------------------------------*/
-div#container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 1000px;
-  width: 100%;
-}
-
-div#box-instruction-input-log {
-  width: 90%;
-  border: 2px solid black;
-  padding: 50px;
-  margin: 10px;
-}
-
-div#box-config {
-  width: 90%;
-  border: 2px solid black;
-  padding: 50px;
-  margin: 10px;
-}
-
-div.box-subconfig{
-  border: 1px dotted black;
-  padding: 15px;
-  margin: 2px;
-}
-
-/*--------------------------------------------------------------------*/
-div#canvas-org-m {
-  width: 90%;
-  height: 60%;
-  border: 2px solid blue;
-  padding: 50px;
-  margin: 10px;
-}
-
-div#canvas-org-m svg {
-  width: 100%;
-  height: 100%;
-}
-
-div#canvas-proc-m {
-  width: 90%;
-  height: 40%;
-  border: 2px solid green;
-  padding: 50px;
-  margin: 10px;
-}
-
-div#canvas-proc-m svg {
-  width: 100%;
-  height: 100%;
-}
-
-div#proc-m-title {
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 120%;
-}
-
-form.config {
-  font-family: Helvetica, Arial, sans-serif;
-}
-

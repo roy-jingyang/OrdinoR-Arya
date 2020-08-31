@@ -6,10 +6,9 @@
 *.un~
 *.swp
 
-# Ignore data files
-*.xes
-*.csv
+# Ignore VSCode config files
+.vscode/*
 
 # Ignore tmp files
-tmp/*
+.tmp/*
 

@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block main %}
+<div class="container-fluid">
+<div class="row">
+<div class="w-50 mx-auto my-4 border border-dark rounded p-4">
+    <h4 class="mb-4"> Import an event log </h4>
+
+    <div class="alert alert-info small">
+        Note: for a demo that shows a toy example used in the paper,
+        click <a href="{{ url_for('visualization.visualize_demo') }}">here</a>.
+    </div>
+
+    {% if not has_log %}
+    <form action="{{ url_for('discovery.index_discover_org_model') }}" 
+        method="POST" enctype="multipart/form-data">
+        {{ log_upload_form.csrf_token }}
+        <div class="form-group w-50 mx-auto small">
+            {{ wtf.form_field(log_upload_form.f_log) }}
+        </div>
+
+        <div class="form-group w-75 mx-auto">
+            <ul class="list-group-flush">
+                <li class="list-group-item small">
+                    <code> .xes </code>
+                    eXtensible Event Stream file, 
+                    which is expected to be compatible with 
+                    <a href="https://pm4py.fit.fraunhofer.de/documentation#importing">PM4Py</a>.
+                </li>
+                <!--
+                <li class="list-group-item small disabled">
+                    <code> .csv </code>
+                    Comma-Separated Values,
+                    which is expected to be output from
+                    <a href="https://fluxicon.com/disco/">Fluxicon Disco</a>.
+                </li>
+                -->
+            </ul>
+        </div>
+
+        {{ wtf.form_field(
+            log_upload_form.submit,
+            button_map={'submit': 'btn btn-primary'}
+        )}}
+    </form>
+
+    {% else %}
+    <div id="box-info-input-log">
+        <table class="table table-bordered small mx-auto text-center">
+            <caption> 
+                Event log statistics for {{log_info.filename}} 
+            </caption>
+            <thead>
+                <tr>
+                    <th> Events </th>
+                    <th> Cases (by case ID) </th>
+                    <th> Activities (by activity label) </th>
+                    <th> Resources (by resource ID) </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td> {{ log_info.num_events }} </td>
+                    <td> {{ log_info.num_cases }} </td>
+                    <td> {{ log_info.num_activities }} </td>
+                    <td> {{ log_info.num_resources }} </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <form action="{{ url_for('discovery.reset') }}" method="GET">
+        <input class="btn btn-secondary text-white" 
+            type="submit" value="Clear and Reset">
+    </form>
+    {% endif %}
+</div>
+</div>
+
+
+{% if has_log %}
+<div class="row">
+<div class="w-75 mx-auto my-4 border border-dark rounded p-4">
+    <h4 class="mb-4"> Configure discovery approach</h4>
+
+    <div class="row my-4">
+        <img class="img-fluid w-50 mx-auto d-block" 
+            src="{{ url_for('static', filename='resources/approach.png')
+        }}" 
+            alt="Approach">
+    </div>
+
+    {# the target URL is supposed to be set dynamically (hard-coded now) #}
+    <form action="{{ url_for('discovery.discover_org_model') }}" 
+        method="POST" enctype="multipart/form-data">
+        {{ discovery_config_form.csrf_token }}
+        <div class="config-section row my-4 p-2 border">
+        {# Phase 1 methods and options #}
+        <div class="config-method col-md-6">
+            {{ wtf.form_field(
+                discovery_config_form.method_learn_exec_modes
+            )}}
+        </div>
+        <div class="config-method-options col-md-6 small">
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_FullMiner_case_attr_name
+            )}}
+            </div>
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_FullMiner_resolution
+            )}}
+            </div>
+        </div>
+        </div>
+
+        <div class="config-section row my-4 p-2 border">
+        {# Phase 2 methods and options #}
+        <div class="config-method col-md-6">
+            {{ wtf.form_field(
+                discovery_config_form.method_discover_res_groupings
+            )}}
+        </div>
+        <div class="config-method-options col-md-6 small">
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_n_groups
+            )}}
+            </div>
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_ahc_method
+            )}}
+            </div>
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_moc_init
+            )}}
+            </div>
+        </div>
+        </div>
+
+        <div class="config-section row my-4 p-2 border">
+        {# Phase 3 methods and options #}
+        <div class="config-method col-md-6">
+            {{ wtf.form_field(
+                discovery_config_form.method_assign_exec_modes
+            )}}
+        </div>
+        <div class="config-method-options col-md-6 small">
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_overall_score_w1
+            )}}
+            </div>
+            <div>
+            {{ wtf.form_field(
+                discovery_config_form.param_overall_score_p
+            )}}
+            </div>
+        </div>
+        </div>
+
+        <div class="row">
+        {{ wtf.form_field(
+            discovery_config_form.submit,
+            button_map={'submit': 'btn btn-success'}
+        )}}
+        </div>
+    </form>
+
+</div>
+</div>
+{% else %}
+{% endif %}
+
+</div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+    $(document).ready(function(){
+        // 1. Hide all options of methods
+        $(".config-method-options > div").hide();
+
+        // 2. Attach event listeners to methods
+        $(".config-method > .form-group > .form-control").change(function(){
+            var id = $(this).attr("config_id");
+            var v = $(this).val();
+
+            $(this).find('option[value="None"]').remove();
+
+            for (var div of $(".config-method-options > div")) {
+                var cfgOpt = $(".form-control", div);
+                if (cfgOpt.attr("prerequisite_id") == id) {
+                    if (cfgOpt.attr("prerequisite_value").split(",").includes(v)) {
+                        $(cfgOpt).prop("disabled", false);
+                        $(div).show();
+                    } else {
+                        $(cfgOpt).prop("disabled", true);
+                        $(div).hide();
+                    }
+                } else {
+                    // do nothing
+                }
+            }
+
+        });
+
+        // Others: attach modal dialogs
+        $("input.btn[value='Upload']").click(function() {
+            toggleModal(
+                "Import event log",
+                "The selected data file is being imported ...",
+                true
+            );
+        });
+        $("input.btn[value='Discover model']").click(function() {
+            toggleModal(
+                "Discover organizational model",
+                "Model discovery in progress. Please wait ...",
+                true
+            );
+        });
+    });
+
+</script>
+{% endblock %}
