@@ -433,8 +433,13 @@
             const width = (
                 Math.floor($("#canvas-ld-memcontr").width() * 0.9)
                 - margin["left"] - margin["right"]);
-            const height = (Object.keys(data).length * 20
-                - margin["top"] - margin["bottom"]);
+            const height = (
+                Math.max(
+                    width * 0.5,
+                    Object.keys(data).length * 20
+                )
+                - margin["top"] - margin["bottom"]
+            );
 
             var svg = d3.select("#canvas-ld-memcontr")
                 .append("svg")
@@ -451,7 +456,7 @@
            // Add X axis: member contribution values
             var x = d3.scaleLinear()
                 .domain([0, 1.0])
-                .range([ 0, width]);
+                .range([0, width]);
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
                 .call(
