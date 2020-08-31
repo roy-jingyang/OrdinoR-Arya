@@ -429,11 +429,11 @@
         d3.select("#canvas-ld-memcontr").selectAll("svg").remove();
         if (data != null) {
             // set the bar chart layout
-            const margin = {top: 25, right: 25, bottom: 40, left: 40};
+            const margin = {top: 25, right: 25, bottom: 40, left: 80};
             const width = (
                 Math.floor($("#canvas-ld-memcontr").width() * 0.9)
                 - margin["left"] - margin["right"]);
-            const height = (Math.floor(width * 0.75)
+            const height = (Object.keys(data).length * 20
                 - margin["top"] - margin["bottom"]);
 
             var svg = d3.select("#canvas-ld-memcontr")
