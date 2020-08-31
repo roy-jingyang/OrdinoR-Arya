@@ -37,6 +37,8 @@ def clear_session_data():
     if 'last_upload_event_log_filetype' in session:
         del session['last_upload_event_log_filetype']
 
+    if 'demo' in session:
+        del session['demo']
     if 'event_log' in session:
         del session['event_log']
     if 'exec_mode_miner' in session:
