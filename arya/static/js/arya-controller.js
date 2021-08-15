@@ -23,35 +23,35 @@ class Waiter {
         for (var groupNodeId of this.df.getAllGroupNodeIds())
             this.nodeStatusTracker.get("groups").set(groupNodeId, []);
 
-        this.nodeStatusTracker.set("modes", new Map());
-        for (var modeNodeId of this.df.getAllModeNodeIds()) {
-            this.nodeStatusTracker.get("modes").set(modeNodeId, []);
-            var parentNodeId = this.df.modeTree
-                .getParentNodeFromLeaf(modeNodeId);
+        this.nodeStatusTracker.set("contexts", new Map());
+        for (var ctxNodeId of this.df.getAllContextNodeIds()) {
+            this.nodeStatusTracker.get("contexts").set(ctxNodeId, []);
+            var parentNodeId = this.df.ecTree
+                .getParentNodeFromLeaf(ctxNodeId);
             if (!this.nodeStatusTracker.has(parentNodeId))
-                this.nodeStatusTracker.get("modes").set(parentNodeId, []);
-            var grandParentNodeId = this.df.modeTree
-                .getGrandParentNodeFromLeaf(modeNodeId);
+                this.nodeStatusTracker.get("contexts").set(parentNodeId, []);
+            var grandParentNodeId = this.df.ecTree
+                .getGrandParentNodeFromLeaf(ctxNodeId);
             if (!this.nodeStatusTracker.has(grandParentNodeId))
-                this.nodeStatusTracker.get("modes").set(grandParentNodeId, []);
+                this.nodeStatusTracker.get("contexts").set(grandParentNodeId, []);
         }
     }
 
-    highlightModeNodesById(nodeList, modeIdBunch, flag) {
+    highlightContextNodesById(nodeList, ctxIdBunch, flag) {
         var newNodeList = [];
         nodeList.forEach(function(node) {
             if (flag == true) {
-                if (modeIdBunch.includes(node[0])) {
+                if (ctxIdBunch.includes(node[0])) {
                     var dressedNode = Object.assign({}, node[1]);
-                    dressedNode["_highlightmode"] = true;
+                    dressedNode["_highlightcontext"] = true;
                     newNodeList.push([node[0], dressedNode]);
                 } else {
                     newNodeList.push(node);
                 }
             } else {
-                if (node[1]["_highlightmode"] != undefined) {
+                if (node[1]["_highlightcontext"] != undefined) {
                     var unDressedNode = Object.assign({}, node[1]);
-                    delete unDressedNode["_highlightmode"];
+                    delete unDressedNode["_highlightcontext"];
                     newNodeList.push([node[0], unDressedNode]);
                 } else {
                     newNodeList.push(node);
@@ -91,14 +91,14 @@ class Waiter {
         var allGroupNodes = self.df.getGroupNodes(
             self.df.getAllGroupNodeIds());
 
-        var allFirstLevelModeNodes = [];
-        for (var modeNodeId of self.df.getAllModeNodeIds()) {
-            var grandParentNodeId = self.df.modeTree
-                .getGrandParentNodeFromLeaf(modeNodeId);
-            allFirstLevelModeNodes.push(self.df.createAugmentedModeNode(
+        var allFirstLevelContextNodes = [];
+        for (var ctxNodeId of self.df.getAllContextNodeIds()) {
+            var grandParentNodeId = self.df.ecTree
+                .getGrandParentNodeFromLeaf(ctxNodeId);
+            allFirstLevelContextNodes.push(self.df.createAugmentedContextNode(
                 grandParentNodeId));
         }
-        var initialNodeList = allGroupNodes.concat(allFirstLevelModeNodes);
+        var initialNodeList = allGroupNodes.concat(allFirstLevelContextNodes);
 
         var initialEdgeList = [];
 
@@ -124,8 +124,8 @@ class Waiter {
                     self.attachResourceNodeListeners(
                         elemList, d3.select(this));
                     break;
-                case "mode":
-                    self.attachModeNodeListeners(
+                case "context":
+                    self.attachContextNodeListeners(
                         elemList, d3.select(this));
                     break;
                 default:
@@ -220,9 +220,9 @@ class Waiter {
             var capIds = self.df.getCapabilityNodeIdsByGroup(groupNodeId);
 
             var allFirstLevelCapIds = new Set();
-            for (var modeNodeId of self.df.getAllModeNodeIds()) {
-                var grandParentNodeId = self.df.modeTree
-                    .getGrandParentNodeFromLeaf(modeNodeId);
+            for (var ctxNodeId of self.df.getAllContextNodeIds()) {
+                var grandParentNodeId = self.df.ecTree
+                    .getGrandParentNodeFromLeaf(ctxNodeId);
                 allFirstLevelCapIds.add(grandParentNodeId);
             }
             allFirstLevelCapIds = Array.from(allFirstLevelCapIds);
@@ -235,7 +235,7 @@ class Waiter {
                 // switch focus: there can only be one group under focus
 
                 // remove all highlights
-                var newNodeList = self.highlightModeNodesById(nodeList,
+                var newNodeList = self.highlightContextNodesById(nodeList,
                     null, false);
                 newNodeList = self.highlightGroupNodebyId(newNodeList,
                     null, false);
@@ -262,9 +262,9 @@ class Waiter {
                 var allFirstLevelCaps = [];
                 var newEdges = [];
                 for (var nodeId of allFirstLevelCapIds) {
-                    //self.nodeStatusTracker.get("modes").set(nodeId, []);
+                    //self.nodeStatusTracker.get("contexts").set(nodeId, []);
                     allFirstLevelCaps.push(
-                        self.df.createAugmentedModeNode(nodeId));
+                        self.df.createAugmentedContextNode(nodeId));
                     if (capIds.indexOf(nodeId) != -1)
                         newEdges.push([
                             [groupNodeId, nodeId], 
@@ -273,7 +273,7 @@ class Waiter {
                 }
                 
                 // highlight related capabilities
-                newNodeList = self.highlightModeNodesById(
+                newNodeList = self.highlightContextNodesById(
                     newNodeList.concat(allFirstLevelCaps), capIds, true);
 
                 renderOrgM(
@@ -294,13 +294,13 @@ class Waiter {
                 var allChildNodeIds = new Set();
                 for (var firstLevelCapId of allFirstLevelCapIds) {
                     for (var child of 
-                        self.df.modeTree.getChildNodes(firstLevelCapId, true))
+                        self.df.ecTree.getChildNodes(firstLevelCapId, true))
                         allChildNodeIds.add(child);
                 }
                 allChildNodeIds = Array.from(allChildNodeIds);
 
-                // remove all highlights on modes related to the group
-                var newNodeList = self.highlightModeNodesById(
+                // remove all highlights on contexts related to the group
+                var newNodeList = self.highlightContextNodesById(
                     //self.df.removeNodes(nodeList, allChildNodeIds),
                     nodeList,
                     null, false);
@@ -329,7 +329,7 @@ class Waiter {
         */
     }
 
-    attachModeNodeListeners(elemList, modeNode) {
+    attachContextNodeListeners(elemList, ctxNode) {
         var self = this;
 
         var [nodeList, edgeList] = elemList;
@@ -338,83 +338,83 @@ class Waiter {
         for (var node of nodeList)
             nodeIdList.push(node[0]);
 
-        modeNode.on("dblclick", function() {
-            var modeNodeId = d3.select(this).select("title").text();
-            var modeNodeName = d3.select(this).select("text").text();
+        ctxNode.on("dblclick", function() {
+            var ctxNodeId = d3.select(this).select("title").text();
+            var ctxNodeName = d3.select(this).select("text").text();
             var currentGroup = self.nodeStatusTracker.get("focus");
             var capIds = (currentGroup == null ? 
                 null : self.df.getCapabilityNodeIdsByGroup(currentGroup));
-            var childNodeIds = self.df.modeTree.getChildNodes(modeNodeId);
+            var childNodeIds = self.df.ecTree.getChildNodes(ctxNodeId);
             
-            if (self.df.modeTree.getNodeLevel(modeNodeId) == 1) {
-                // dblclick on first level execution modes
-                var status = self.nodeStatusTracker.get("modes")
-                    .get(modeNodeId).indexOf("dblclick");
+            if (self.df.ecTree.getNodeLevel(ctxNodeId) == 1) {
+                // dblclick on first level execution contexts
+                var status = self.nodeStatusTracker.get("contexts")
+                    .get(ctxNodeId).indexOf("dblclick");
 
                 if (status == -1) {
                     //console.log("not clicked. Setting");
-                    self.sc.toggleModeCT(modeNodeName);
+                    self.sc.toggleContextCT(ctxNodeName);
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).push("dblclick");
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).push("dblclick");
 
                     var descendants = [];
                     var newEdges = [];
                     for (var nodeId of childNodeIds) {
-                        self.nodeStatusTracker.get("modes")
+                        self.nodeStatusTracker.get("contexts")
                             .set(nodeId, []);
                         descendants.push(
-                            self.df.createAugmentedModeNode(nodeId));
-                        newEdges.push([[modeNodeId, nodeId], {}]);
+                            self.df.createAugmentedContextNode(nodeId));
+                        newEdges.push([[ctxNodeId, nodeId], {}]);
                     }
                     renderOrgM(
-                        self.highlightModeNodesById(
+                        self.highlightContextNodesById(
                             nodeList.concat(descendants),
                             capIds, (capIds != null)),
                         edgeList.concat(newEdges)
                     );
                 } else {
                     //console.log("already clicked. Reverting");
-                    self.sc.toggleModeCT();
-                    self.sc.toggleModeAT();
-                    self.sc.toggleModeTT();
-                    self.sc.toggleModeInfo();
+                    self.sc.toggleContextCT();
+                    self.sc.toggleContextAT();
+                    self.sc.toggleContextTT();
+                    self.sc.toggleContextInfo();
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).splice(status, 1);
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).splice(status, 1);
                     renderOrgM(
                         self.df.removeNodes(nodeList, 
-                            self.df.modeTree.getChildNodes(modeNodeId, true)),
+                            self.df.ecTree.getChildNodes(ctxNodeId, true)),
                         self.df.removeEdges(edgeList,
-                            self.df.modeTree.getChildNodes(modeNodeId, true))
+                            self.df.ecTree.getChildNodes(ctxNodeId, true))
                     );
                     renderProcM();
                     renderLDMemContr();
                 }
-            } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 2) {
-                // dblclick on second level execution modes
-                var status = self.nodeStatusTracker.get("modes")
-                    .get(modeNodeId).indexOf("dblclick");
+            } else if (self.df.ecTree.getNodeLevel(ctxNodeId) == 2) {
+                // dblclick on second level execution contexts
+                var status = self.nodeStatusTracker.get("contexts")
+                    .get(ctxNodeId).indexOf("dblclick");
 
                 if (status == -1) {
                     //console.log("not clicked. Setting");
-                    self.sc.toggleModeTT(modeNodeName);
+                    self.sc.toggleContextTT(ctxNodeName);
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).push("dblclick");
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).push("dblclick");
 
                     // expand and show descendants
                     var descendants = [];
                     var newEdges = [];
                     for (var nodeId of childNodeIds) {
-                        self.nodeStatusTracker.get("modes")
+                        self.nodeStatusTracker.get("contexts")
                             .set(nodeId, []);
                         descendants.push(
-                            self.df.createAugmentedModeNode(nodeId));
-                        newEdges.push([[modeNodeId, nodeId], {}]);
+                            self.df.createAugmentedContextNode(nodeId));
+                        newEdges.push([[ctxNodeId, nodeId], {}]);
                     }
                     renderOrgM(
-                        self.highlightModeNodesById(
+                        self.highlightContextNodesById(
                             nodeList.concat(descendants),
                             capIds, (capIds != null)),
                         edgeList.concat(newEdges)
@@ -422,13 +422,13 @@ class Waiter {
 
                     // render process model with activity highlighted
                     renderProcM();
-                    var [ct, x, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+                    var [ct, x, tt] = self.df.ecTree.parseCtxTriple(ctxNodeId);
 
                     var atsHighlighted = [];
                     for (var childNodeId of childNodeIds) {
                         if (capIds != null && capIds.includes(childNodeId)) {
                             atsHighlighted.push(
-                                self.df.modeTree.parseModeTriple(childNodeId)[1]
+                                self.df.ecTree.parseCtxTriple(childNodeId)[1]
                             );
                         }
                     }
@@ -461,52 +461,52 @@ class Waiter {
 
                 } else {
                     //console.log("already clicked. Reverting");
-                    self.sc.toggleModeTT();
-                    self.sc.toggleModeAT();
-                    self.sc.toggleModeInfo();
+                    self.sc.toggleContextTT();
+                    self.sc.toggleContextAT();
+                    self.sc.toggleContextInfo();
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).splice(status, 1);
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).splice(status, 1);
                     renderOrgM(
                         self.df.removeNodes(nodeList, 
-                            self.df.modeTree.getChildNodes(modeNodeId, true)),
+                            self.df.ecTree.getChildNodes(ctxNodeId, true)),
                         self.df.removeEdges(edgeList,
-                            self.df.modeTree.getChildNodes(modeNodeId, true))
+                            self.df.ecTree.getChildNodes(ctxNodeId, true))
                     );
                     renderProcM();
                     renderLDMemContr();
                 }
 
-            } else if (self.df.modeTree.getNodeLevel(modeNodeId) == 3) {
-                // dblclick on third level execution modes
-                var status = self.nodeStatusTracker.get("modes")
-                    .get(modeNodeId).indexOf("dblclick");
+            } else if (self.df.ecTree.getNodeLevel(ctxNodeId) == 3) {
+                // dblclick on third level execution contexts
+                var status = self.nodeStatusTracker.get("contexts")
+                    .get(ctxNodeId).indexOf("dblclick");
 
                 if (status == -1) {
                     //console.log("not clicked. Setting");
-                    self.sc.toggleModeAT(modeNodeName);
-                    self.sc.toggleModeInfo(modeNodeId);
+                    self.sc.toggleContextAT(ctxNodeName);
+                    self.sc.toggleContextInfo(ctxNodeId);
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).push("dblclick");
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).push("dblclick");
 
-                    var [ct, at, tt] = self.df.modeTree.parseModeTriple(modeNodeId);
+                    var [ct, at, tt] = self.df.ecTree.parseCtxTriple(ctxNodeId);
 
                     var currentGroup = self.nodeStatusTracker.get("focus");
-                    d3.request("/query_mode_event_number")
+                    d3.request("/query_ctx_event_number")
                         .header("Content-Type", "application/json")
                         .response(function(xhr) {
                             var respData = JSON.parse(xhr.response);
 
-                            $("#ld-mode-events-num > .score-card-val").text(
-                                respData["mode_event_number"]
+                            $("#ld-ctx-events-num > .score-card-val").text(
+                                respData["ctx_event_number"]
                             );
-                            if (respData.hasOwnProperty("mode_group_event_number")) {
-                                $("#ld-mode-group-events-num > .score-card-val").text(
-                                    respData["mode_group_event_number"]
+                            if (respData.hasOwnProperty("ctx_group_event_number")) {
+                                $("#ld-ctx-group-events-num > .score-card-val").text(
+                                    respData["ctx_group_event_number"]
                                 );
                             } else {
-                                $("#ld-mode-group-events-num > .score-card-val").text(
+                                $("#ld-ctx-group-events-num > .score-card-val").text(
                                     '-'
                                 );
                             }
@@ -518,7 +518,7 @@ class Waiter {
                             "group_id": currentGroup == null ?
                                 null : currentGroup.split(delim)[1]
                         }));
-                    d3.request("/query_local_diagnostic_measures")
+                    d3.request("/query_model_analysis_measures")
                         .header("Content-Type", "application/json")
                         .response(function(xhr) {
                             var respData = JSON.parse(xhr.response);
@@ -546,11 +546,11 @@ class Waiter {
                             
                 } else {
                     //console.log("already clicked. Reverting");
-                    //self.sc.toggleModeAT();
-                    //self.sc.toggleModeInfo();
+                    //self.sc.toggleContextAT();
+                    //self.sc.toggleContextInfo();
 
-                    self.nodeStatusTracker.get("modes")
-                        .get(modeNodeId).splice(status, 1);
+                    self.nodeStatusTracker.get("contexts")
+                        .get(ctxNodeId).splice(status, 1);
                 }
             }
             else {
@@ -565,9 +565,9 @@ class Waiter {
 
 /***********************************************************************/
 // class for handling the display of statistics on the panel
-// NOTE: only local diagnostics need to be processed by the class,
+// NOTE: only model analysis measures need to be processed by this class,
 //       as global conformance results are fixed once a model is given
-// singleton class
+//       singleton class
 class ScoreCard {
     constructor(df) {
         // check existence
@@ -586,7 +586,7 @@ class ScoreCard {
             $("#ld-group-mem-num > .score-card-val").text('-');
             $("#ld-group-cap-num > .score-card-val").text('-');
             $("#ld-group-events-num > .score-card-val").text('-');
-            $("#ld-mode-group-events-num > .score-card-val").text('-');
+            $("#ld-ctx-group-events-num > .score-card-val").text('-');
             $("#ld-relative-focus > .score-card-val").text('-');
             $("#ld-relative-stake > .score-card-val").text('-');
             $("#ld-coverage > .score-card-val").text('-');
@@ -613,44 +613,44 @@ class ScoreCard {
         }
     }
 
-    toggleModeInfo(modeNodeId) {
+    toggleContextInfo(ctxNodeId) {
         var self = this;
 
-        if (modeNodeId == null) {
-            $("#ld-mode-events-num > .score-card-val").text('-');
-            $("#ld-mode-group-events-num > .score-card-val").text('-');
-            $("#ld-mode-group-num > .score-card-val").text('-');
+        if (ctxNodeId == null) {
+            $("#ld-ctx-events-num > .score-card-val").text('-');
+            $("#ld-ctx-group-events-num > .score-card-val").text('-');
+            $("#ld-ctx-group-num > .score-card-val").text('-');
         } else {
-            $("#ld-mode-group-num > .score-card-val").text(
-                self.df.getGroupNodeIdsByMode(modeNodeId).length
+            $("#ld-ctx-group-num > .score-card-val").text(
+                self.df.getGroupNodeIdsByContext(ctxNodeId).length
             );
         }
     }
 
-    toggleModeCT(typeName) {
+    toggleContextCT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-ct > .score-card-val").text('-');
+            $("#ld-ctx-ct > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[0];
-            $("#ld-mode-ct > .score-card-val").text(typeName);
+            $("#ld-ctx-ct > .score-card-val").text(typeName);
         }
     }
 
-    toggleModeAT(typeName) {
+    toggleContextAT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-at > .score-card-val").text('-');
+            $("#ld-ctx-at > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[1];
-            $("#ld-mode-at > .score-card-val").text(typeName);
+            $("#ld-ctx-at > .score-card-val").text(typeName);
         }
     }
 
-    toggleModeTT(typeName) {
+    toggleContextTT(typeName) {
         if (typeName == null) {
-            $("#ld-mode-tt > .score-card-val").text('-');
+            $("#ld-ctx-tt > .score-card-val").text('-');
         } else {
             var typeName = typeName.split(',')[2];
-            $("#ld-mode-tt > .score-card-val").text(typeName);
+            $("#ld-ctx-tt > .score-card-val").text(typeName);
         }
     }
 }

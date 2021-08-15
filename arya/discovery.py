@@ -1,6 +1,8 @@
 from flask import *
 from os.path import join
 
+from ordinor.constants import CASE_ID, ACTIVITY, RESOURCE
+
 from . import app
 
 bp = Blueprint('discovery', __name__)
@@ -47,18 +49,17 @@ def index_discover_org_model():
             )
 
             # read log and fetch basic info
-            with open(join(app.config['TEMP'], fn_server), 'r') as f:
-                session['last_upload_event_log_filename'] = fn_server
-                if file_ext == 'csv':
-                    session['last_upload_event_log_filetype'] = 'csv'
-                    from orgminer.IO.reader import read_disco_csv
-                    el = read_disco_csv(f)
-                elif file_ext == 'xes':
-                    session['last_upload_event_log_filetype'] = 'xes'
-                    from orgminer.IO.reader import read_xes
-                    el = read_xes(f)
-                else:
-                    raise TypeError('Invalid event log filetype')
+            session['last_upload_event_log_filename'] = fn_server
+            if file_ext == 'csv':
+                session['last_upload_event_log_filetype'] = 'csv'
+                from ordinor.io import read_disco_csv
+                el = read_disco_csv(join(app.config['TEMP'], fn_server))
+            elif file_ext == 'xes':
+                session['last_upload_event_log_filetype'] = 'xes'
+                from ordinor.io import read_xes
+                el = read_xes(join(app.config['TEMP'], fn_server))
+            else:
+                raise TypeError('Invalid event log filetype')
             session['event_log'] = el
         else:
             flash(log_upload_form.errors['f_log'].pop(), 
@@ -70,9 +71,9 @@ def index_discover_org_model():
     log_info = {
         'filename': session['last_upload_event_log_name'],
         'num_events': len(el),
-        'num_cases': len(set(el['case_id'])),
-        'num_activities': len(set(el['activity'])),
-        'num_resources': len(set(el['resource'])),
+        'num_cases': len(set(el[CASE_ID])),
+        'num_activities': len(set(el[ACTIVITY])),
+        'num_resources': len(set(el[RESOURCE])),
         'attributes': el.columns
     }
 
@@ -110,7 +111,7 @@ def discover_org_model():
     if config_form.validate_on_submit():
         fp_log = join(app.config['TEMP'], 
             session['last_upload_event_log_filename'])
-        om, exec_mode_miner = _discover_org_model(
+        om, exec_ctxs_miner = _discover_org_model(
             fp_log,
             session['last_upload_event_log_filetype'],
             DiscoveryConfigForm.parse_form(config_form)
@@ -121,7 +122,7 @@ def discover_org_model():
         with open(fp_server_om, 'w+') as fout:
             om.to_file_csv(fout) 
 
-        session['exec_mode_miner'] = exec_mode_miner
+        session['ec_miner'] = exec_ctxs_miner
         session['org_model'] = om
 
         return redirect(url_for('visualization.visualize'))
@@ -144,34 +145,36 @@ DELIM = app.config['ID_DELIMITER']
 
 def _discover_org_model(
     path_server_event_log, filetype_server_event_log, configs):
-    with open(path_server_event_log, 'r') as f:
-        if filetype_server_event_log == 'csv':
-            from orgminer.IO.reader import read_disco_csv
-            el = read_disco_csv(f)
-        elif filetype_server_event_log == 'xes':
-            from orgminer.IO.reader import read_xes
-            el = read_xes(f)
-        else:
-            pass
+    if filetype_server_event_log == 'csv':
+        from ordinor.io import read_disco_csv
+        el = read_disco_csv(path_server_event_log)
+    elif filetype_server_event_log == 'xes':
+        from ordinor.io import read_xes
+        el = read_xes(path_server_event_log)
+    else:
+        pass
 
     # Phase 1
-    cls_exec_mode_miner = _import_block('orgminer.ExecutionModeMiner.' +
-        configs['learn_exec_modes']['method']) 
-    params = configs['learn_exec_modes']['params'] \
-        if len(configs['learn_exec_modes']['params']) > 0 else None
+    cls_exec_ctxs_miner = _import_block(
+        'ordinor.execution_context.' +
+        configs['learn_exec_ctxs']['method']
+    ) 
+    params = configs['learn_exec_ctxs']['params'] \
+        if len(configs['learn_exec_ctxs']['params']) > 0 else None
     if params is None:
-        exec_mode_miner = cls_exec_mode_miner(el)
+        exec_ctxs_miner = cls_exec_ctxs_miner(el)
     else:
-        exec_mode_miner = cls_exec_mode_miner(el, **params)
-    rl = exec_mode_miner.derive_resource_log(el)
+        exec_ctxs_miner = cls_exec_ctxs_miner(el, **params)
+    rl = exec_ctxs_miner.derive_resource_log(el)
 
     # Phase 2
-    from orgminer.ResourceProfiler.raw_profiler import count_execution_frequency
-    profiles = count_execution_frequency(rl)
+    from ordinor.org_model_miner.resource_features import direct_count
+    profiles = direct_count(rl)
 
     group_discoverer = _import_block(
-        'orgminer.OrganizationalModelMiner.' 
-        + configs['discover_res_groupings']['method'])
+        'ordinor.org_model_miner.group_discovery.' 
+        + configs['discover_res_groupings']['method']
+    )
     params = configs['discover_res_groupings']['params'] \
         if len(configs['discover_res_groupings']['params']) > 0 else None
     if params is None:
@@ -183,16 +186,16 @@ def _discover_org_model(
         ogs = ogs[0]
 
     # Phase 3
-    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
+    from ordinor.org_model_miner import OrganizationalModel
     om = OrganizationalModel()
-    mode_assigner = _import_block(
-        'orgminer.OrganizationalModelMiner.mode_assignment.' +
-        configs['assign_exec_modes']['method'])
-    params = configs['assign_exec_modes']['params'] \
-        if len(configs['assign_exec_modes']['params']) > 0 else None
+    group_profiler = _import_block(
+        'ordinor.org_model_miner.group_profiling.' +
+        configs['assign_exec_ctxs']['method'])
+    params = configs['assign_exec_ctxs']['params'] \
+        if len(configs['assign_exec_ctxs']['params']) > 0 else None
     if params is None:
-        om = mode_assigner(ogs, rl)
+        om = group_profiler(ogs, rl)
     else:
-        om = mode_assigner(ogs, rl, **params)
+        om = group_profiler(ogs, rl, **params)
 
-    return om, exec_mode_miner
+    return om, exec_ctxs_miner

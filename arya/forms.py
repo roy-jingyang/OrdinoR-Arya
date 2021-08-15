@@ -64,17 +64,17 @@ class MethodConfigForm(ABC):
 class DiscoveryConfigForm(MethodConfigForm):
     class Form(FlaskForm):
         # Phase 1 methods and options
-        method_learn_exec_modes = wtforms.SelectField(
-            u'Phase 1. Learn execution modes',
+        method_learn_exec_ctxs = wtforms.SelectField(
+            u'Phase 1. Learn execution contexts',
             choices=[
                 (None, '(select a method)'),
-                ('direct_groupby.ATonlyMiner', 'ATonly'),
-                ('direct_groupby.FullMiner', 'CT+AT+TT (case attribute)')
+                ('ATonlyMiner', 'ATonly'),
+                ('FullMiner', 'CT+AT+TT (case attribute)')
             ],
             validators=[wtforms.validators.InputRequired()],
             render_kw={
                 'config_type': 'method',
-                'config_id': 'learn_exec_modes',
+                'config_id': 'learn_exec_ctxs',
             }
         ) 
         param_FullMiner_case_attr_name = wtforms.SelectField(
@@ -84,16 +84,16 @@ class DiscoveryConfigForm(MethodConfigForm):
             choices=[],
             validators=[
                 RequiredIfOnlyEqualsTo(
-                    'method_learn_exec_modes',
-                    ['direct_groupby.FullMiner'],
+                    'method_learn_exec_ctxs',
+                    ['FullMiner'],
                     stop_validation=True
                 )
             ],
             render_kw={
                 'config_type': 'param',
                 'config_id': 'case_attr_name',
-                'prerequisite_id': 'learn_exec_modes',
-                'prerequisite_value': 'direct_groupby.FullMiner',
+                'prerequisite_id': 'learn_exec_ctxs',
+                'prerequisite_value': 'FullMiner',
             }
         )
         param_FullMiner_resolution = wtforms.SelectField(
@@ -107,16 +107,16 @@ class DiscoveryConfigForm(MethodConfigForm):
             ],
             validators=[
                 RequiredIfOnlyEqualsTo(
-                    'method_learn_exec_modes',
-                    ['direct_groupby.FullMiner'],
+                    'method_learn_exec_ctxs',
+                    ['FullMiner'],
                     stop_validation=True
                 )
             ],
             render_kw={
                 'config_type': 'param',
                 'config_id': 'resolution',
-                'prerequisite_id': 'learn_exec_modes',
-                'prerequisite_value': 'direct_groupby.FullMiner',
+                'prerequisite_id': 'learn_exec_ctxs',
+                'prerequisite_value': 'FullMiner',
             }
         )
 
@@ -125,8 +125,8 @@ class DiscoveryConfigForm(MethodConfigForm):
             u'Phase 2. Discover resource groupings',
             choices=[
                 (None, '(select a method)'),
-                ('clustering.hierarchical.ahc', 'AHC'),
-                ('clustering.overlap.moc', 'MOC')
+                ('ahc', 'AHC'),
+                ('moc', 'MOC')
             ],
             validators=[wtforms.validators.InputRequired()],
             render_kw={
@@ -145,7 +145,7 @@ class DiscoveryConfigForm(MethodConfigForm):
                 'config_type': 'param',
                 'config_id': 'n_groups',
                 'prerequisite_id': 'discover_res_groupings',
-                'prerequisite_value': 'clustering.hierarchical.ahc,clustering.overlap.moc',
+                'prerequisite_value': 'ahc,moc',
             }
         )
         param_ahc_method = wtforms.SelectField(
@@ -158,7 +158,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             validators=[
                 RequiredIfOnlyEqualsTo(
                     'method_discover_res_groupings',
-                    ['clustering.hierarchical.ahc'],
+                    ['ahc'],
                     stop_validation=True
                 )
             ],
@@ -166,7 +166,7 @@ class DiscoveryConfigForm(MethodConfigForm):
                 'config_type': 'param',
                 'config_id': 'method',
                 'prerequisite_id': 'discover_res_groupings',
-                'prerequisite_value': 'clustering.hierarchical.ahc',
+                'prerequisite_value': 'ahc',
             }
         )
         param_moc_init = wtforms.SelectField(
@@ -177,7 +177,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             validators=[
                 RequiredIfOnlyEqualsTo(
                     'method_discover_res_groupings',
-                    ['clustering.overlap.moc'],
+                    ['moc'],
                     stop_validation=True
                 )
             ],
@@ -185,13 +185,13 @@ class DiscoveryConfigForm(MethodConfigForm):
                 'config_type': 'param',
                 'config_id': 'init',
                 'prerequisite_id': 'discover_res_groupings',
-                'prerequisite_value': 'clustering.overlap.moc',
+                'prerequisite_value': 'moc',
             }
         )
 
         # Phase 3 methods and options
-        method_assign_exec_modes = wtforms.SelectField(
-            u'Phase 3. Assign execution modes',
+        method_assign_exec_ctxs = wtforms.SelectField(
+            u'Phase 3. Profile resource groups',
             choices=[
                 (None, '(select a method)'),
                 ('full_recall', 'FullRecall'),
@@ -200,7 +200,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             validators=[wtforms.validators.InputRequired()],
             render_kw={
                 'config_type': 'method',
-                'config_id': 'assign_exec_modes',
+                'config_id': 'assign_exec_ctxs',
             }
         )
         param_overall_score_p = wtforms.FloatField(
@@ -208,7 +208,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             score)''',
             validators=[
                 RequiredIfOnlyEqualsTo(
-                    'method_assign_exec_modes',
+                    'method_assign_exec_ctxs',
                     ['overall_score']
                 ),
                 wtforms.validators.NumberRange(0, 1.0),
@@ -216,7 +216,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             render_kw={
                 'config_type': 'param',
                 'config_id': 'p',
-                'prerequisite_id': 'assign_exec_modes',
+                'prerequisite_id': 'assign_exec_ctxs',
                 'prerequisite_value': 'overall_score',
             }
         )
@@ -224,7 +224,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             u'''OverallScore: w1 (weight value for Group Relative Stake)''',
             validators=[
                 RequiredIfOnlyEqualsTo(
-                    'method_assign_exec_modes',
+                    'method_assign_exec_ctxs',
                     ['overall_score']
                 ),
                 wtforms.validators.NumberRange(0, 1.0),
@@ -232,7 +232,7 @@ class DiscoveryConfigForm(MethodConfigForm):
             render_kw={
                 'config_type': 'param',
                 'config_id': 'w1',
-                'prerequisite_id': 'assign_exec_modes',
+                'prerequisite_id': 'assign_exec_ctxs',
                 'prerequisite_value': 'overall_score',
             }
         )

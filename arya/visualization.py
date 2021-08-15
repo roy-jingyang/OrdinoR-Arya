@@ -3,6 +3,13 @@ from flask import *
 import sys
 from os.path import join
 
+from pandas import Timestamp as dt
+
+from ordinor.constants import (
+    CASE_ID, ACTIVITY, TIMESTAMP, RESOURCE,
+    CASE_TYPE, ACTIVITY_TYPE, TIME_TYPE
+)
+
 from . import app, APP_STATIC
 
 bp = Blueprint('visualization', __name__)
@@ -32,47 +39,47 @@ def visualize_demo():
         join(app.config['TEMP'], '{}.log.xes'.format(session.sid[:32]))
     )
 
-    from orgminer.OrganizationalModelMiner.base import OrganizationalModel
-    with open(join(APP_STATIC, fn_demo_log), 'r') as f_log, \
-        open(join(APP_STATIC, fn_demo_om), 'r') as f_om:
-        from orgminer.IO.reader import read_xes
-        session['event_log'] = read_xes(f_log)
+    from ordinor.io import read_xes
+    session['event_log'] = read_xes(join(APP_STATIC, fn_demo_log))
+    from ordinor.org_model_miner import OrganizationalModel
+    with open(join(APP_STATIC, fn_demo_om), 'r') as f_om:
         session['org_model'] = OrganizationalModel.from_file_csv(f_om)
 
     data_org_model = _draw_org_model(session['org_model'])
 
-    # Hard coding the toy execution mode mining results
-    from orgminer.ExecutionModeMiner.base import BaseMiner
-    exec_mode_miner = BaseMiner(session['event_log'])
-    exec_mode_miner._ctypes['654423'] = 'CT.normal'
-    exec_mode_miner._ctypes['654424'] = 'CT.normal'
-    exec_mode_miner._ctypes['654425'] = 'CT.VIP'
+    # Hard coding the toy execution contexts
+    from ordinor.execution_context.base import BaseMiner
+    ec_miner = BaseMiner(session['event_log'])
 
-    exec_mode_miner._atypes['register request'] = 'AT.register'
-    exec_mode_miner._atypes['confirm request'] = 'AT.register'
-    exec_mode_miner._atypes['get missing info'] = 'AT.contact'
-    exec_mode_miner._atypes['pay claim'] = 'AT.contact'
-    exec_mode_miner._atypes['check insurance'] = 'AT.check'
-    exec_mode_miner._atypes['accept claim'] = 'AT.decide'
-    exec_mode_miner._atypes['reject claim'] = 'AT.decide'
+    ec_miner._ctypes['654423'] = 'CT.normal'
+    ec_miner._ctypes['654424'] = 'CT.normal'
+    ec_miner._ctypes['654425'] = 'CT.VIP'
 
-    exec_mode_miner._ttypes['2018/08/29 15:02:00.000000'] = 'TT.afternoon' 
-    exec_mode_miner._ttypes['2018/08/29 16:28:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/29 16:45:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/30 09:09:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/30 11:32:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/30 11:48:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/29 16:08:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/29 16:12:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/30 09:22:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/30 11:45:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/30 10:07:00.000000'] = 'TT.morning'
-    exec_mode_miner._ttypes['2018/08/30 12:44:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/30 13:32:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/30 14:09:00.000000'] = 'TT.afternoon'
-    exec_mode_miner._ttypes['2018/08/30 14:14:00.000000'] = 'TT.afternoon'
+    ec_miner._atypes['register request'] = 'AT.register'
+    ec_miner._atypes['confirm request'] = 'AT.register'
+    ec_miner._atypes['get missing info'] = 'AT.contact'
+    ec_miner._atypes['pay claim'] = 'AT.contact'
+    ec_miner._atypes['check insurance'] = 'AT.check'
+    ec_miner._atypes['accept claim'] = 'AT.decide'
+    ec_miner._atypes['reject claim'] = 'AT.decide'
 
-    session['exec_mode_miner'] = exec_mode_miner
+    ec_miner._ttypes[dt('2018-08-29 15:02:00+10:00')] = 'TT.afternoon' 
+    ec_miner._ttypes[dt('2018-08-29 16:28:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-29 16:45:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-30 09:09:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-30 11:32:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-30 11:48:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-29 16:08:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-29 16:12:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-30 09:22:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-30 11:45:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-30 10:07:00+10:00')] = 'TT.morning'
+    ec_miner._ttypes[dt('2018-08-30 12:44:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-30 13:32:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-30 14:09:00+10:00')] = 'TT.afternoon'
+    ec_miner._ttypes[dt('2018-08-30 14:14:00+10:00')] = 'TT.afternoon'
+
+    session['ec_miner'] = ec_miner
 
     return redirect(url_for('.visualize'))
 
@@ -87,10 +94,15 @@ def visualize():
 
     # calculate global conformance data
     el = session['event_log']
-    exec_mode_miner = session['exec_mode_miner']
-    rl = exec_mode_miner.derive_resource_log(el)
 
-    from orgminer.Evaluation.l2m.conformance import fitness, precision
+    print(el)
+    for ts in el['time:timestamp']:
+        print(type(ts))
+    ec_miner = session['ec_miner']
+    rl = ec_miner.derive_resource_log(el)
+    print(rl)
+
+    from ordinor.conformance import fitness, precision
     fitness = fitness(rl, om)
     precision = precision(rl, om)
     f1_score = 2 * (fitness * precision) / (fitness + precision)
@@ -129,47 +141,47 @@ def discover_process_model():
 def query_group_event_number():
     group_id = int(request.get_json()['group_id'])
     el = session['event_log']
-    exec_mode_miner = session['exec_mode_miner']
-    rl = exec_mode_miner.derive_resource_log(el)
+    ec_miner = session['ec_miner']
+    rl = ec_miner.derive_resource_log(el)
 
     om = session['org_model']
     group = om.find_group_members(group_id)
 
-    group_event_number = len(rl.loc[rl['resource'].isin(group)])
+    group_event_number = len(rl.loc[rl[RESOURCE].isin(group)])
     return str(group_event_number)
 
 
-@bp.route('/query_mode_event_number', methods=['POST'])
-def query_mode_event_number():
+@bp.route('/query_ctx_event_number', methods=['POST'])
+def query_ctx_event_number():
     req_params = request.get_json()
     ct = req_params.get('case_type', None)
     at = req_params.get('activity_type', None)
     tt = req_params.get('time_type', None)
-    mode = tuple((ct, at, tt))
+    ctx = tuple((ct, at, tt))
     group_id = req_params.get('group_id', None)
     group_id = int(group_id) if group_id is not None else None
 
     el = session['event_log']
-    exec_mode_miner = session['exec_mode_miner']
-    rl = exec_mode_miner.derive_resource_log(el)
+    ec_miner = session['ec_miner']
+    rl = ec_miner.derive_resource_log(el)
 
     resp = dict()
-    resp['mode_event_number'] = len(rl.groupby([
-        'case_type', 'activity_type', 'time_type']).get_group(mode))
+    resp['ctx_event_number'] = len(rl.groupby([
+        CASE_TYPE, ACTIVITY_TYPE, TIME_TYPE]).get_group(ctx))
 
     if group_id is not None:
         om = session['org_model']
         group = om.find_group_members(group_id)
-        if mode in om.find_group_execution_modes(group_id):
-            rl = rl.loc[rl['resource'].isin(group)]
-            resp['mode_group_event_number'] = len(rl.groupby([
-                'case_type', 'activity_type', 'time_type']).get_group(mode))
+        if ctx in om.find_group_execution_contexts(group_id):
+            rl = rl.loc[rl[RESOURCE].isin(group)]
+            resp['ctx_group_event_number'] = len(rl.groupby([
+                CASE_TYPE, ACTIVITY_TYPE, TIME_TYPE]).get_group(ctx))
 
     return json.jsonify(resp)
 
 
-@bp.route('/query_local_diagnostic_measures', methods=['POST'])
-def query_local_diagnostic_measures():
+@bp.route('/query_model_analysis_measures', methods=['POST'])
+def query_model_analysis_measures():
     req_params = request.get_json()
 
     group_id = req_params.get('group_id', None)
@@ -179,30 +191,30 @@ def query_local_diagnostic_measures():
         ct = req_params.get('case_type', None)
         at = req_params.get('activity_type', None)
         tt = req_params.get('time_type', None)
-        mode = tuple((ct, at, tt))
+        ctx = tuple((ct, at, tt))
 
         el = session['event_log']
-        exec_mode_miner = session['exec_mode_miner']
-        rl = exec_mode_miner.derive_resource_log(el)
+        ec_miner = session['ec_miner']
+        rl = ec_miner.derive_resource_log(el)
 
         om = session['org_model']
         group = om.find_group_members(group_id)
 
-        if mode in om.find_group_execution_modes(group_id):
-            from orgminer.Evaluation.l2m.diagnostics import (
-                group_relative_focus, group_relative_stake, 
+        if ctx in om.find_group_execution_contexts(group_id):
+            from ordinor.analysis.group_profiles import (
+                group_relative_focus, group_relative_stake,
                 group_coverage, group_member_contribution
             )
                 
             return json.jsonify({
                 'group_relative_focus': \
-                    group_relative_focus(group, mode, rl),
+                    group_relative_focus(group, ctx, rl),
                 'group_relative_stake': \
-                    group_relative_stake(group, mode, rl),
+                    group_relative_stake(group, ctx, rl),
                 'group_coverage': \
-                    group_coverage(group, mode, rl),
+                    group_coverage(group, ctx, rl),
                 'group_member_contribution': \
-                    group_member_contribution(group, mode, rl)
+                    group_member_contribution(group, ctx, rl)
             })
 
     return Response(status=204)
@@ -237,25 +249,26 @@ def _draw_org_model(om):
                 '_class': 'group-resource'
             }
 
-        # capable execution modes, and connecting edges to groups
-        exec_modes = om.find_group_execution_modes(og_id)
-        for em in exec_modes:
-            ct, at, tt = em[0], em[1], em[2]
-            mode_node_id = 'mode' + DELIM + '({},{},{})'.format(ct, at, tt)
-            data_dict[mode_node_id] = {
+        # capable execution contexts, and connecting edges to groups
+        exec_ctxs = om.find_group_execution_contexts(og_id)
+        for co in exec_ctxs:
+            ct, at, tt = co[0], co[1], co[2]
+            ctx_node_id = 'context' + DELIM + '({},{},{})'.format(ct, at, tt)
+            data_dict[ctx_node_id] = {
                 '_type': 'node',
-                'label': '{}, {}, {}'.format(em[0], em[1], em[2]),
-                '_class': 'mode'
+                'label': '{}, {}, {}'.format(ct, at, tt),
+                '_class': 'context'
             }
-            data_dict[group_node_id + ' -> ' + mode_node_id] = {
+            data_dict[group_node_id + ' -> ' + ctx_node_id] = {
                 '_type': 'edge',
-                '_class': 'group-mode'
+                '_class': 'group-context'
             }
 
     from json import dumps
     return dumps(data_dict)
 
 
+# TODO
 def _discover_draw_process_model(
     case_type, hl_activity_types, time_type):
     from .utilities import _trim_activity_label_tail
@@ -269,10 +282,11 @@ def _discover_draw_process_model(
     pm4py_log = xes_importer.apply(join(
         app.config['TEMP'], fn_server
     ))
+    print(type(pm4py_log))
 
-    exec_mode_miner = session['exec_mode_miner']
-    sel_cases = exec_mode_miner.get_values_by_type(case_type) \
-        if case_type != '' else set(el['case_id'])
+    ec_miner = session['ec_miner']
+    sel_cases = ec_miner.get_values_by_type(case_type) \
+        if case_type != '' else set(el[CASE_TYPE])
 
     '''
     # NOTE: CSV only - trim the additional markings appended by Disco
@@ -281,18 +295,18 @@ def _discover_draw_process_model(
     '''
 
     # filter event log
-    from pm4py.objects.log.log import EventLog, Trace
+    from pm4py.objects.log.log import EventLog
     pm4py_log_filtered = EventLog()
     # filter event log: keep selected cases only
     for trace in pm4py_log:
         if trace.attributes['concept:name'] in sel_cases:
             pm4py_log_filtered.append(trace)
 
-    from pm4py.algo.discovery.dfg import factory as dfg_miner
-    dfg = dfg_miner.apply(pm4py_log_filtered)
-    from pm4py.visualization.dfg import factory as dfg_vis_factory
-    gviz = dfg_vis_factory.apply(dfg, log=pm4py_log_filtered, 
-        variant='frequency', 
+    from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+    dfg = dfg_discovery.apply(pm4py_log_filtered)
+    from pm4py.visualization.dfg import visualizer as dfg_visualization
+    gviz = dfg_visualization.apply(dfg, log=pm4py_log_filtered, 
+        variant=dfg_visualization.Variants.FREQUENCY, 
         parameters={'maxNoOfEdgesInDiagram': 30}
     )
     gv_source = gviz.source
@@ -300,9 +314,10 @@ def _discover_draw_process_model(
     # find activity labels that should be highlighted
     hl_activities = []
     for at in hl_activity_types:
-        hl_activities.extend(exec_mode_miner.get_values_by_type(at))
+        hl_activities.extend(ec_miner.get_values_by_type(at))
 
     # TODO: delegate to front-end: edit and annotate the graph
+    """
     import pygraphviz as pgv
     graph = pgv.AGraph(gviz.source)
     for node in graph.nodes():
@@ -313,7 +328,7 @@ def _discover_draw_process_model(
             node.attr['fontname'] = 'Helvetica'
 
             # TODO: NOT an elegant solution for highlighting purpose - need rev.
-            if exec_mode_miner._atypes[node.attr['label']] \
+            if ec_miner._atypes[node.attr['label']] \
                 in hl_activity_types:
                 # highlight
                 node.attr['style'] = 'bold'
@@ -324,3 +339,4 @@ def _discover_draw_process_model(
 
     gv_source = graph.string()
     return gv_source, hl_activities
+    """

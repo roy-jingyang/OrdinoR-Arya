@@ -35,7 +35,7 @@
                     <input type="checkbox" class="custom-control-input"
                         id="switch-view-proc-m">
                     <label class="custom-control-label"
-                        for="switch-view-proc-m">
+                        for="switch-view-proc-m" hidden>
                         Toggle process model view
                     </label>
                     </div>
@@ -116,7 +116,7 @@
         <ul class="nav nav-pills small">
             <li class="nav-item">
                 <a class="nav-link bg-info text-white active">
-                    Global Conformance
+                    Model Conformance
                 </a>
             </li>
         </ul>
@@ -161,13 +161,13 @@
     </div>
     </div>
 
-    <!-- Stats of local diagnostics -->
+    <!-- Stats of model analysis -->
     <div class="row my-3">
     <div class="col">
         <ul class="nav nav-pills small">
             <li class="nav-item">
                 <a class="nav-link bg-info text-white active">
-                    Local Diagnostics
+                    Model Analysis
                 </a>
             </li>
         </ul>
@@ -201,7 +201,7 @@
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0 px-0">
-                        Capabilities
+                        Capabilities<br>(Execution Contexts)
                     </div>
                 </div>
                 <div class="card border-0">
@@ -211,7 +211,7 @@
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0 px-0">
-                        Executions
+                        Occurrences
                     </div>
                 </div>
             </div>
@@ -229,7 +229,7 @@
                 </div>
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
-                        bg-light py-0 px-0" id="ld-mode-ct">
+                        bg-light py-0 px-0" id="ld-ctx-ct">
                         <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
@@ -243,7 +243,7 @@
                 </div>
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
-                        bg-light py-0 px-0" id="ld-mode-at">
+                        bg-light py-0 px-0" id="ld-ctx-at">
                         <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
@@ -257,7 +257,7 @@
                 </div>
                 <div class="col-9">
                     <div class="card-body font-weight-bold text-left
-                        bg-light py-0 px-0" id="ld-mode-tt">
+                        bg-light py-0 px-0" id="ld-ctx-tt">
                         <h6 class="score-card-val">-</h6>
                     </div>
                 </div>
@@ -267,32 +267,32 @@
             <div class="card-deck mx-auto text-center text-nowrap mt-3">
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
-                        id="ld-mode-events-num">
+                        id="ld-ctx-events-num">
                         <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0 px-0">
-                        Executions<br>(total)
+                        Occurrences<br>(total)
                     </div>
                 </div>
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
-                        id="ld-mode-group-events-num">
+                        id="ld-ctx-group-events-num">
                         <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0 px-0">
-                        Executions<br>(this group)
+                        Occurrences<br>(this group)
                     </div>
                 </div>
                 <div class="card border-0">
                     <div class="card-body font-weight-bold bg-light py-1 px-0"
-                        id="ld-mode-group-num">
+                        id="ld-ctx-group-num">
                         <h5 class="score-card-val">-</h5>
                     </div>
                     <div class="card-footer small text-secondary 
                     border-0 py-0 px-0">
-                        Groups<br>(capable)
+                        Groups<br>with candidates
                     </div>
                 </div>
             </div>
@@ -529,7 +529,7 @@
             selection.resetZoom(d3.transition().duration(length));
     }
 
-    /* Display all group nodes and all first level modes when page loaded. */
+    /* Display all group nodes and all first level contexts when page loaded. */
     var [initNodeList, initEdgeList] = waiter.resetToInit();
     renderOrgM(initNodeList, initEdgeList);
 
@@ -573,8 +573,10 @@
     $("#show-toy-log").click(function() {
         var logDF = $.parseHTML(
             `<div>{{ session["event_log"].to_html(
-                columns=['case_id', 'activity', 'resource', 'timestamp']
-                )|safe }}
+                columns=['case:concept:name', 
+                         'concept:name', 
+                         'org:resource', 
+                         'time:timestamp'])|safe }}
             </div>`
         );
         $(logDF).find("table").addClass(

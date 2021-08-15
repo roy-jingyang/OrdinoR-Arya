@@ -1,51 +1,38 @@
 /***********************************************************************/
-// class for organizing the execution mode tree
-class ModeTree {
+// class for organizing the execution context tree
+class ECTree {
     // NOTE: this is not a common tree --- each node records its children.
-    // (not the other way around lol)
-    constructor(modeNodeIdList, preference) {
-        this.root = this.stringifyModeTriple(['*', '*', '*']);
+    // (not the other way around)
+    constructor(ctxNodeIdList) {
+        this.root = this.stringifyCtxTriple(['⊥', '⊥', '⊥']);
         this.nodes = [];
         for (var i = 0; i < 4; i++) {
             this.nodes.push(new Map());
         }
         this.nodes[0].set(this.root, new Set());
 
-        this.viewType = preference;
-
-        switch(this.viewType) {
-            case "case_first":
-                this.buildTreeCaseFirst(modeNodeIdList);
-                break;
-            case "time_first":
-                this.buildTreeTimeFirst(modeNodeIdList);
-                break;
-            default:
-                // do nothing
-        }
+        this.buildTreeCaseFirst(ctxNodeIdList);
 
         return this;
     }
 
-    parseModeTriple(modeNodeId) {
-        var modeStr = modeNodeId.split(delim)[1];
-        const [ct, at, tt] = modeStr.slice(1, -1).split(',');
+    parseCtxTriple(ctxNodeId) {
+        var ctxStr = ctxNodeId.split(delim)[1];
+        const [ct, at, tt] = ctxStr.slice(1, -1).split(',');
         return [ct, at, tt];
     }
 
-    stringifyModeTriple(modeTriple) {
-        return "mode" + delim + '(' + modeTriple.join(',') + ')';
+    stringifyCtxTriple(ctxTriple) {
+        return "context" + delim + '(' + ctxTriple.join(',') + ')';
     }
 
-    buildTreeCaseFirst(modeNodeIdList) {
-        //console.log("case first building");
+    buildTreeCaseFirst(ctxNodeIdList) {
+        for (var ctxNodeId of ctxNodeIdList) {
+            const [ct, at, tt] = this.parseCtxTriple(ctxNodeId);
 
-        for (var modeNodeId of modeNodeIdList) {
-            const [ct, at, tt] = this.parseModeTriple(modeNodeId);
-
-            var ctXX = this.stringifyModeTriple([ct, '*', '*']);
-            var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
-            var ctattt = this.stringifyModeTriple([ct, at, tt]);
+            var ctXX = this.stringifyCtxTriple([ct, '⊥', '⊥']);
+            var ctXtt = this.stringifyCtxTriple([ct, '⊥', tt]);
+            var ctattt = this.stringifyCtxTriple([ct, at, tt]);
 
             this.nodes[0].get(this.root).add(ctXX);
 
@@ -63,48 +50,23 @@ class ModeTree {
         }
     }
 
-    buildTreeTimeFirst(modeNodeIdList) {
-        //console.log("time first building");
-
-        for (var modeNodeId of modeNodeIdList) {
-            const [ct, at, tt] = this.parseModeTriple(modeNodeId);
-
-            var XXtt = this.stringifyModeTriple(['*', '*', tt]);
-            var ctXtt = this.stringifyModeTriple([ct, '*', tt]);
-            var ctattt = this.stringifyModeTriple([ct, at, tt]);
-
-            this.nodes[0].get(this.root).add(ctXX);
-
-            if (!this.nodes[1].has(XXtt))
-                this.nodes[1].set(XXtt, new Set());
-            this.nodes[1].get(XXtt).add(ctXtt);
-
-            if (!this.nodes[2].has(ctXtt))
-                this.nodes[2].set(ctXtt, new Set());
-            this.nodes[2].get(ctXtt).add(ctattt);
-
-            if (!this.nodes[3].has(ctattt))
-                this.nodes[3].set(ctattt, new Set());
-        }
-    }
-
     // corresponding to first, second, and third -level nodes
-    getNodeLevel(modeNodeId) {
-        const modeTriple = this.parseModeTriple(modeNodeId);
+    getNodeLevel(ctxNodeId) {
+        const ctxTriple = this.parseCtxTriple(ctxNodeId);
         var count = 0;
-        for (var type of modeTriple) {
-            if (type == '*')
+        for (var type of ctxTriple) {
+            if (type == '⊥')
                 count += 1;
         }
         return (3 - count);
     }
 
-    getChildNodes(modeNodeId, isTraverse) {
-        var nodeLevel = this.getNodeLevel(modeNodeId);
+    getChildNodes(ctxNodeId, isTraverse) {
+        var nodeLevel = this.getNodeLevel(ctxNodeId);
         if (isTraverse == true && nodeLevel == 1) {
             // only effective for grandparent nodes
             var allSprings = [];
-            var children = Array.from(this.nodes[nodeLevel].get(modeNodeId))
+            var children = Array.from(this.nodes[nodeLevel].get(ctxNodeId))
                 .sort();
             allSprings = allSprings.concat(children);
             for (var child of children) {
@@ -113,27 +75,18 @@ class ModeTree {
             }
             return allSprings;
         } else {
-            return Array.from(this.nodes[nodeLevel].get(modeNodeId)).sort();
+            return Array.from(this.nodes[nodeLevel].get(ctxNodeId)).sort();
         }
     }
 
-    getGrandParentNodeFromLeaf(modeNodeId) {
-        const [ct, at, tt] = this.parseModeTriple(modeNodeId);
-        switch (this.viewType) {
-            case "case_first":
-                return this.stringifyModeTriple([ct, '*', '*']);
-                break;
-            case "time_first":
-                return this.stringifyModeTriple(['*', '*', tt]);
-                break;
-            default:
-                // do nothing
-        }
+    getGrandParentNodeFromLeaf(ctxNodeId) {
+        const [ct, at, tt] = this.parseCtxTriple(ctxNodeId);
+        return this.stringifyCtxTriple([ct, '⊥', '⊥']);
     }
 
-    getParentNodeFromLeaf(modeNodeId) {
-        const [ct, at, tt] = this.parseModeTriple(modeNodeId);
-        return this.stringifyModeTriple([ct, '*', tt]);
+    getParentNodeFromLeaf(ctxNodeId) {
+        const [ct, at, tt] = this.parseCtxTriple(ctxNodeId);
+        return this.stringifyCtxTriple([ct, '⊥', tt]);
     }
 
 }
@@ -150,12 +103,12 @@ class DataFactory {
 
         this.nodeListResources = new Map();
         this.nodeListGroups = new Map();
-        this.nodeListModes = new Map();
+        this.nodeListContexts = new Map();
 
         this.edgeListGroupsResources = new Map();
-        this.edgeListGroupsModes = new Map();
+        this.edgeListGroupsContexts = new Map();
 
-        var modeNodeIdList = [];
+        var ctxNodeIdList = [];
         for (const [id, attrs] of Object.entries(JSON.parse(dataString))) {
             var elem = Object();
             for (const [attrName, attrValue] of Object.entries(attrs)) {
@@ -168,9 +121,9 @@ class DataFactory {
             else if (elem["_type"] == "node" && elem["_class"] == "resource") {
                 this.nodeListResources.set(id, elem);
             }
-            else if (elem["_type"] == "node" && elem["_class"] == "mode") {
-                this.nodeListModes.set(id, elem);
-                modeNodeIdList.push(id);
+            else if (elem["_type"] == "node" && elem["_class"] == "context") {
+                this.nodeListContexts.set(id, elem);
+                ctxNodeIdList.push(id);
             }
             else if (elem["_type"] == "edge" && elem["_class"] == "group-resource") {
                 const [groupNodeId, resourceNodeId] = id.split(' -> ');
@@ -184,16 +137,16 @@ class DataFactory {
                 this.edgeListGroupsResources.get(resourceNodeId)
                     .set(groupNodeId, elem);
             }
-            else if (elem["_type"] == "edge" && elem["_class"] == "group-mode") {
-                const [groupNodeId, modeNodeId] = id.split(' -> ');
-                if (!this.edgeListGroupsModes.has(groupNodeId))
-                    this.edgeListGroupsModes.set(groupNodeId, new Map());
-                this.edgeListGroupsModes.get(groupNodeId)
-                    .set(modeNodeId, elem);
+            else if (elem["_type"] == "edge" && elem["_class"] == "group-context") {
+                const [groupNodeId, ctxNodeId] = id.split(' -> ');
+                if (!this.edgeListGroupsContexts.has(groupNodeId))
+                    this.edgeListGroupsContexts.set(groupNodeId, new Map());
+                this.edgeListGroupsContexts.get(groupNodeId)
+                    .set(ctxNodeId, elem);
 
-                if (!this.edgeListGroupsModes.has(modeNodeId))
-                    this.edgeListGroupsModes.set(modeNodeId, new Map());
-                this.edgeListGroupsModes.get(modeNodeId)
+                if (!this.edgeListGroupsContexts.has(ctxNodeId))
+                    this.edgeListGroupsContexts.set(ctxNodeId, new Map());
+                this.edgeListGroupsContexts.get(ctxNodeId)
                     .set(groupNodeId, elem);
             }
             else {
@@ -201,8 +154,8 @@ class DataFactory {
             }
         }
 
-        // build the execution mode tree
-        this.modeTree = new ModeTree(modeNodeIdList, "case_first");
+        // build the execution context tree
+        this.ecTree = new ECTree(ctxNodeIdList);
 
         return this;
     }
@@ -235,15 +188,15 @@ class DataFactory {
         return elems;
     }
 
-    getAllModeNodeIds() {
-        return Array.from(this.nodeListModes.keys()).sort();
+    getAllContextNodeIds() {
+        return Array.from(this.nodeListContexts.keys()).sort();
     }
 
-    getModeNodes(nbunch) {
+    getContextNodes(nbunch) {
         var elems = [];
         for (var id of nbunch) {
-            if (this.nodeListModes.has(id)) {
-                elems.push([id, this.nodeListModes.get(id)]); 
+            if (this.nodeListContexts.has(id)) {
+                elems.push([id, this.nodeListContexts.get(id)]); 
             }
         }
         return elems;
@@ -256,18 +209,18 @@ class DataFactory {
     }
 
     getCapabilityNodeIdsByGroup(groupNodeId) {
-        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+        if (this.edgeListGroupsContexts.get(groupNodeId) === undefined) {
             return [];
         }
         const caps = Array.from(
-            this.edgeListGroupsModes.get(groupNodeId).keys());
+            this.edgeListGroupsContexts.get(groupNodeId).keys());
         var firstLevelCapIds = new Set();
         var secondLevelCapIds = new Set();
         for (var capId of caps) {
             firstLevelCapIds.add(
-                this.modeTree.getGrandParentNodeFromLeaf(capId));
+                this.ecTree.getGrandParentNodeFromLeaf(capId));
             secondLevelCapIds.add(
-                this.modeTree.getParentNodeFromLeaf(capId));
+                this.ecTree.getParentNodeFromLeaf(capId));
         }
         firstLevelCapIds = Array.from(firstLevelCapIds);
         secondLevelCapIds = Array.from(secondLevelCapIds);
@@ -275,11 +228,11 @@ class DataFactory {
     }
 
     getNumCapabilitiesByGroup(groupNodeId) {
-        if (this.edgeListGroupsModes.get(groupNodeId) === undefined) {
+        if (this.edgeListGroupsContexts.get(groupNodeId) === undefined) {
             return 0;
         }
         const caps = Array.from(
-            this.edgeListGroupsModes.get(groupNodeId).keys());
+            this.edgeListGroupsContexts.get(groupNodeId).keys());
         return caps.length;
     }
 
@@ -289,9 +242,9 @@ class DataFactory {
         return groups.sort();
     }
 
-    getGroupNodeIdsByMode(modeNodeId) {
+    getGroupNodeIdsByContext(ctxNodeId) {
         const groups = Array.from(
-            this.edgeListGroupsModes.get(modeNodeId).keys());
+            this.edgeListGroupsContexts.get(ctxNodeId).keys());
         return groups.sort();
     }
 
@@ -304,7 +257,7 @@ class DataFactory {
                 return this.getMemberNodeIdsByGroup(nodeUId)
                     .includes(nodeVId);
             }
-            else if (nodeVId.indexOf("mode") == 0) {
+            else if (nodeVId.indexOf("context") == 0) {
                 return this.getCapabilityNodeIdsByGroup(nodeUId)
                     .includes(nodeVId);
             }
@@ -330,8 +283,8 @@ class DataFactory {
                     return this.edgeListGroupsResources
                         .get(nodeUId).get(nodeVId);
                 }
-                else if (nodeVId.indexOf("mode") == 0) {
-                    return this.edgeListGroupsModes
+                else if (nodeVId.indexOf("context") == 0) {
+                    return this.edgeListGroupsContexts
                         .get(nodeUId).get(nodeVId);
                 }
                 else {
@@ -348,24 +301,6 @@ class DataFactory {
             return undefined;
         }
     }
-
-    /*
-     * DEPRECATED : no longer in use and should not be.
-    findEdges(nodeIdList) {
-        // return pairwise edges given a list of nodes (if they exist)
-        var allEdges = [];
-        for (var i = 0; i < nodeIdList.length - 1; i++) {
-            var u = nodeIdList[i];
-            for (var j = i + 1; j < nodeIdList.length; j++) {
-                var v = nodeIdList[j];
-                if (this.hasEdge(u, v)) {
-                    allEdges.push([[u, v], {}])
-                }
-            }
-        }
-        return allEdges;
-    }
-    */
 
     removeNodes(nodeList, nodeId) {
         if (Array.isArray(nodeId)) {
@@ -447,9 +382,9 @@ class DataFactory {
         return uniqueEdgeList;
     }
 
-    // Helper: sort a nodeList by an order of "resources > groups > modes"
+    // Helper: sort a nodeList by an order of "resources > groups > contexts"
     compareNodeList(a, b) {
-        var order = ["mode", "group", "resource"];
+        var order = ["context", "group", "resource"];
         var order_a = order.indexOf(a[0].split(delim)[0]);
         var order_b = order.indexOf(b[0].split(delim)[0]);
 
@@ -482,8 +417,8 @@ class DataFactory {
 
         for (var node of nodeList) {
             var nodeType = node[0].split(delim)[0];
-            if (nodeType == "mode")
-                nodeType += "_L" + this.modeTree.getNodeLevel(node[0]);
+            if (nodeType == "context")
+                nodeType += "_L" + this.ecTree.getNodeLevel(node[0]);
 
             if (!nodeClusters.has(nodeType))
                 nodeClusters.set(nodeType, []);
@@ -506,9 +441,9 @@ class DataFactory {
                 case "group":
                     nodeStyles += 'color="cadetblue1",shape="house",';
                     break;
-                case "mode_L1":
-                case "mode_L2":
-                case "mode_L3":
+                case "context_L1":
+                case "context_L2":
+                case "context_L3":
                     nodeStyles += 'color="gainsboro",shape="octagon",' 
                         + 'fontsize=10';
                     break;
@@ -530,7 +465,7 @@ class DataFactory {
                     } else {
                         // specific style for highlighted nodes
                         switch (attr) {
-                            case "_highlightmode":
+                            case "_highlightcontext":
                                 if (node[1][attr] == true)
                                     string += 'style="bold",fontcolor="red3",';
                                 break;
@@ -600,15 +535,10 @@ class DataFactory {
             + edgeDotSrcString + "\n}");
     }
 
-    createAugmentedModeNode(modeNodeId) {
-        var modeNodeElem = new Object();
-        modeNodeElem["label"] = modeNodeId.split(delim)[1].slice(1, -1);
-        /*
-        // the root node is "meaningless" therefore hidden
-        if (this.modeTree.getNodeLevel(modeNodeId) == 0)
-            modeNodeElem["style"] = "invis";
-        */
-        return [modeNodeId, modeNodeElem];
+    createAugmentedContextNode(ctxNodeId) {
+        var ctxNodeElem = new Object();
+        ctxNodeElem["label"] = ctxNodeId.split(delim)[1].slice(1, -1);
+        return [ctxNodeId, ctxNodeElem];
     }
 }
 

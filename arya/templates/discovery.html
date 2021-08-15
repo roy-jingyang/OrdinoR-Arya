@@ -54,9 +54,9 @@
             <thead>
                 <tr>
                     <th> Events </th>
-                    <th> Cases (by case ID) </th>
-                    <th> Activities (by activity label) </th>
-                    <th> Resources (by resource ID) </th>
+                    <th> Cases ("case:concept:name") </th>
+                    <th> Activities ("concept:name") </th>
+                    <th> Resources ("org:resource") </th>
                 </tr>
             </thead>
 
@@ -100,7 +100,7 @@
         {# Phase 1 methods and options #}
         <div class="config-method col-md-6">
             {{ wtf.form_field(
-                discovery_config_form.method_learn_exec_modes
+                discovery_config_form.method_learn_exec_ctxs
             )}}
         </div>
         <div class="config-method-options col-md-6 small">
@@ -147,7 +147,7 @@
         {# Phase 3 methods and options #}
         <div class="config-method col-md-6">
             {{ wtf.form_field(
-                discovery_config_form.method_assign_exec_modes
+                discovery_config_form.method_assign_exec_ctxs
             )}}
         </div>
         <div class="config-method-options col-md-6 small">

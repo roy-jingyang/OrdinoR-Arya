@@ -41,7 +41,7 @@ def clear_session_data():
         del session['demo']
     if 'event_log' in session:
         del session['event_log']
-    if 'exec_mode_miner' in session:
-        del session['exec_mode_miner']
+    if 'ec_miner' in session:
+        del session['ec_miner']
     if 'org_model' in session:
         del session['org_model']

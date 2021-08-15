@@ -12,7 +12,7 @@ APP_STATIC = os.path.join(APP_ROOT, app.static_folder)
 def create_app(demo=False):
     app.demo = demo
     app.debug = True
-    app.config['SECRET_KEY'] = 'orgminer-arya'
+    app.config['SECRET_KEY'] = 'arya'
     app.config['TEMP'] = os.path.join(os.path.dirname(APP_ROOT), '.tmp/')
     app.config['ID_DELIMITER'] = '|::|'
 
@@ -33,7 +33,7 @@ def create_app(demo=False):
         from . import discovery
         app.register_blueprint(discovery.bp)
     else:
-        print('NOTE: [OrgMiner-Arya started as demo-only]')
+        print('NOTE: [OrdinoR-Arya started as demo-only]')
 
     app.url_build_error_handlers.append(url_build_error_handler_null)
 
