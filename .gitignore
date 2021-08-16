@@ -12,3 +12,5 @@
 # Ignore tmp files
 .tmp/*
 
+# Ignore run.py (the main program)
+run.py
