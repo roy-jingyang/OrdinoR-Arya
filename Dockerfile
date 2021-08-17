@@ -1,12 +1,12 @@
-FROM heroku/miniconda
+FROM python:3.8
 
-/bin/sh -c conda install python=3.6
-RUN conda install --channel conda-forge graphviz
+#RUN conda install --channel conda-forge graphviz
 
 # Grab pip requirements.txt
 ADD ./requirements.txt /tmp/requirements.txt
 # Install dependencies with pip
 RUN pip install --upgrade pip
+RUN pip install graphviz
 RUN pip install -r /tmp/requirements.txt \
     --no-cache-dir \
     --default-timeout=1000
