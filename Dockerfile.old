@@ -1,6 +1,6 @@
-FROM heroku/heroku
+FROM heroku/miniconda
 
-RUN conda install python=3.8
+/bin/sh -c conda install python=3.6
 RUN conda install --channel conda-forge graphviz
 
 # Grab pip requirements.txt
