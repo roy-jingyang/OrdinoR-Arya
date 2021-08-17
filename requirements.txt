@@ -1,2 +1,2 @@
 gunicorn
-ordinor
+ordinor==0.1.0rc11
