@@ -10,7 +10,6 @@ RUN pip install --upgrade pip
 RUN pip install gunicorn
 RUN pip install -r /tmp/requirements.txt \
     --index-url https://pypi.org/simple \
-    --extra-index-url https://test.pypi.org/simple/ \
     --default-timeout=1000
     #--no-use-pep517
 
