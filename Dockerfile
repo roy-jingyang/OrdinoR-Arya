@@ -1,7 +1,7 @@
-FROM heroku/miniconda:3
+FROM heroku/heroku
 
+RUN conda install python=3.8
 RUN conda install --channel conda-forge graphviz
-RUN conda install --channel conda-forge ciso8601
 
 # Grab pip requirements.txt
 ADD ./requirements.txt /tmp/requirements.txt
@@ -9,10 +9,8 @@ ADD ./requirements.txt /tmp/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install gunicorn
 RUN pip install -r /tmp/requirements.txt \
-    --index-url https://pypi.org/simple \
+    --no-cache-dir \
     --default-timeout=1000
-    #--no-use-pep517
-
 
 # Add app code
 ADD ./arya /opt/OrdinoR-Arya/arya/
