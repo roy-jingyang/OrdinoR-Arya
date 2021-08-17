@@ -7,7 +7,6 @@ RUN conda install --channel conda-forge graphviz
 ADD ./requirements.txt /tmp/requirements.txt
 # Install dependencies with pip
 RUN pip install --upgrade pip
-RUN pip install gunicorn
 RUN pip install -r /tmp/requirements.txt \
     --no-cache-dir \
     --default-timeout=1000
