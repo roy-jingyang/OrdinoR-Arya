@@ -19,10 +19,13 @@
 <body>
     <!-- putting header inside container will prevent full width navbar -->
     <header>
-        <nav class="navbar navbar-expand-md navbar-light bg-secondary">
+        <nav class="navbar navbar-expand-md navbar-light bg-light">
             <!-- Brand -->
-            <a class="navbar-brand text-light text-monospace" href="#">
-                OrdinoR-Arya
+            <a class="navbar-brand">
+                <img src="{{url_for('static',
+                filename='resources/ordinor_logo_transparent.png')}}"
+                height=30 alt="ordinor"
+                >
             </a>
 
             <!-- Toggler -->
@@ -35,15 +38,15 @@
             <div class="collapse navbar-collapse" id="collapsibleNav">
                 <ul class="navbar-nav">
                     <li class="nav-item active">
-                        <a class="text-light nav-link" 
+                        <a class="text-dark nav-link" 
                             href="{{url_for('discovery.index')}}"> 
                             Discovery 
                         </a>
                     </li>
-                    <li class="nav-item text-light">
+                    <li class="nav-item text-secondary" hidden>
                         <a class="nav-link disabled" href="#"> Conformance </a>
                     </li>
-                    <li class="nav-item text-light">
+                    <li class="nav-item text-secondary" hidden>
                         <a class="nav-link disabled" href="#"> Enhancement </a>
                     </li>
                 </ul>
