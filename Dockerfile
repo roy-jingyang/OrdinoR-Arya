@@ -13,7 +13,7 @@ RUN pip install -r /tmp/requirements.txt \
 
 # Add app code
 ADD ./arya /opt/OrdinoR-Arya/arya/
-ADD ./run.py /opt/OrdinoR-Arya/run.py
+#ADD ./run.py /opt/OrdinoR-Arya/run.py
 WORKDIR /opt/OrdinoR-Arya
 
 CMD gunicorn --bind 0.0.0.0:$PORT 'arya:create_app(demo=True)'

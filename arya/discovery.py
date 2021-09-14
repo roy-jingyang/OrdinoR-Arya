@@ -93,7 +93,7 @@ def index_discover_org_model():
         NumberRange(2, log_info['num_resources'])
     )
 
-    return render_template('discovery.html',
+    return render_template('wizards/discovery.html',
         has_log=True,
         log_info=log_info,
         log_upload_form=None,

@@ -1,8 +1,7 @@
 /***********************************************************************/
 // class for organizing the execution context tree
 class ECTree {
-    // NOTE: this is not a common tree --- each node records its children.
-    // (not the other way around)
+    // NOTE: each node records its children.
     constructor(ctxNodeIdList) {
         this.root = this.stringifyCtxTriple(['⊥', '⊥', '⊥']);
         this.nodes = [];

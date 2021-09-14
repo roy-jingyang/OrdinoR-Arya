@@ -106,7 +106,7 @@ def visualize():
     fitness = fitness(rl, om)
     precision = precision(rl, om)
     f1_score = 2 * (fitness * precision) / (fitness + precision)
-    return render_template('visualize.html',
+    return render_template('panel/visualize.html',
         DELIM=DELIM,
         data_org_model=data_org_model,
         fitness_org_model=fitness, 
